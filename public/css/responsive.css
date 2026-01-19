@@ -1,0 +1,39 @@
+@media screen and (min-device-width: 1200px) and (max-device-width: 1600px) and (-webkit-min-device-pixel-ratio: 1) {}
+
+/* @media (width: 1280px) and (height: 800px) and (orientation: landscape) {} */
+/* @media (width: 1024px) and (height: 600px) and (orientation: landscape) {} */
+/* @media only screen and (min-width: 768px) and (max-width: 768px) and (orientation: portrait) {} */
+/* @media screen and (device-width: 1024px) and (device-height: 600px) and (orientation: landscape) {} */
+
+@media only screen and (max-width: 1199px) {}
+
+@media only screen and (max-width: 1024px) {}
+
+@media screen and (min-width: 992px) {}
+
+@media only screen and (min-width: 834px) and (max-width: 1366px) {}
+
+@media only screen and (max-width: 768px) {}
+
+@media only screen and (max-width: 600px) {
+
+    /* sidebar-toggler */
+    .content .navbar .sidebar-toggler {
+        display: block !important;
+        height: auto;
+    }
+    .mob-font{
+        font-size: 0.7rem;
+    }
+}
+
+@media only screen and (max-width: 480px) {}
+
+
+
+/* @media only screen and (min-width: 768px) and (max-width: 1366px) {} */
+
+
+/* @media screen and (width: 1024px) and (height: 1366px) and (orientation: portrait) {
+    iPad Pro 12.9" Portrait
+} */
