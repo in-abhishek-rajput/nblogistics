@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Trip;
 use Illuminate\Http\Request;
 
 class TripsController extends Controller
@@ -12,7 +13,11 @@ class TripsController extends Controller
      */
     public function index()
     {
-        //
+        $total_trips = Trip::count();
+        $pending_trips = Trip::where('status', 'pending')->count();
+        $ongoing_trips = Trip::where('status', 'ongoing')->count();
+        $completed_trips = Trip::where('status', 'completed')->count();
+        return view('admin.trip.list', compact('total_trips', 'pending_trips', 'ongoing_trips', 'completed_trips'));
     }
 
     /**
