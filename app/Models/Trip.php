@@ -23,6 +23,8 @@ class Trip extends Model
         'origin',
         'destination',
         'billing_type',
+        'per_unit_amount',
+        'unit',
         'freight_amount',
         'start_date',
         'start_km',
@@ -32,6 +34,7 @@ class Trip extends Model
         'lr_number',
         'material_name',
         'note',
+        'completed_date',
         'pod_received_date',
         'pod_submitted_date',
         'settled_date',
@@ -46,7 +49,13 @@ class Trip extends Model
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
+        'completed_date' => 'datetime',
+        'pod_received_date' => 'datetime',
+        'pod_submitted_date' => 'datetime',
+        'settled_date' => 'datetime',
         'freight_amount' => 'decimal:2',
+        'per_unit_amount' => 'decimal:2',
+        'unit' => 'decimal:2',
     ];
 
     /**

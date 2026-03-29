@@ -12,10 +12,12 @@ class AddTrip extends Component
 {
     // Form properties - public for Livewire binding
     public $party_id = null;
-     public $truck_id = null;
-     public  $origin = null;
-     public  $destination = null;
-     public  $billing_type = null;
+    public $truck_id = null;
+    public  $origin = null;
+    public  $destination = null;
+    public  $billing_type = 'fixed';
+     public  $per_unit_amount = null;
+     public  $unit = null;
      public  $freight_amount = null;
      public  $start_date = null;
      public  $start_km = null;
@@ -34,19 +36,27 @@ class AddTrip extends Component
      */
     protected function rules()
     {
-        return [
+        $rules = [
             'party_id' => 'required|exists:parties,id', // Party required and must exist
             'truck_id' => 'required|exists:trucks,id', // Truck required and must exist
             'origin' => 'required|string|max:255', // Origin required
             'destination' => 'required|string|max:255', // Destination required
             'billing_type' => 'required|in:' . implode(',', array_keys(config('trip.billing_types'))), // Billing type must be valid
-            'freight_amount' => 'required|numeric|min:0', // Freight amount required and positive
             'start_date' => 'required|date|before_or_equal:today', // Start date required and not future
             'start_km' => 'required|integer|min:0', // Start KM required and positive
             'lr_number' => 'nullable|string|max:255', // LR Number optional
             'material_name' => 'nullable|string|max:255', // Material Name optional
             'note' => 'nullable|string', // Note optional
         ];
+
+        if ($this->billing_type === 'fixed') {
+            $rules['freight_amount'] = 'required|numeric|min:0';
+        } else {
+            $rules['per_unit_amount'] = 'required|numeric|min:0';
+            $rules['unit'] = 'required|numeric|min:0';
+        }
+
+        return $rules;
     }
 
     /**
@@ -66,6 +76,12 @@ class AddTrip extends Component
             'freight_amount.required' => 'Freight amount is required.',
             'freight_amount.numeric' => 'Freight amount must be a number.',
             'freight_amount.min' => 'Freight amount must be positive.',
+            'per_unit_amount.required' => 'Per unit amount is required.',
+            'per_unit_amount.numeric' => 'Per unit amount must be a number.',
+            'per_unit_amount.min' => 'Per unit amount must be positive.',
+            'unit.required' => 'Unit is required.',
+            'unit.numeric' => 'Unit must be a number.',
+            'unit.min' => 'Unit must be positive.',
             'start_date.required' => 'Start date is required.',
             'start_date.before_or_equal' => 'Start date cannot be in the future.',
             'start_km.required' => 'Start KM reading is required.',
@@ -76,8 +92,6 @@ class AddTrip extends Component
             'material_name.string' => 'Material Name must be a string.',
             'material_name.max' => 'Material Name must not exceed 255 characters.',
             'note.string' => 'Note must be a string.',
-            'status.required' => 'Status is required.',
-            'status.in' => 'Invalid status selected.',
         ];
     }
 
@@ -91,17 +105,20 @@ class AddTrip extends Component
         // Validate input
         $validated = $this->validate();
 
+        // Calculate freight_amount if not fixed
+        if ($this->billing_type !== 'fixed') {
+            $validated['freight_amount'] = $this->per_unit_amount * $this->unit;
+        }
+
         try {
             // Create trip using validated data
             $validated['created_by'] = auth()->id();
             $driver_id = Truck::find($this->truck_id)->driver_id;
             $validated['driver_id'] = $driver_id;
-            // dd($validated);
             Trip::create($validated);
 
             // Reset form
-            $this->reset(['party_id', 'truck_id', 'origin', 'destination', 'billing_type', 'freight_amount', 'start_date', 'start_km', 'end_date', 'end_km', 'lr_number', 'material_name', 'note']);
-            $this->status = config('trip.default_status');
+            $this->reset(['party_id', 'truck_id', 'origin', 'destination', 'billing_type', 'per_unit_amount', 'unit', 'freight_amount', 'start_date', 'start_km', 'end_date', 'end_km', 'lr_number', 'material_name', 'note']);
 
             // Emit event to refresh list if needed
             $this->dispatch('tripAdded');
@@ -150,6 +167,30 @@ class AddTrip extends Component
     public function getDriversProperty()
     {
         return Driver::active()->orderBy('name')->get();
+    }
+
+    // Update freight amount when unit changes
+    public function updatedUnit()
+    {
+        $this->calculateFreight();
+    }
+
+    public function updatedBillingType()
+    {
+        // Reset related fields when billing type changes
+        $this->per_unit_amount = null;
+        $this->unit = null;
+        $this->freight_amount = null;
+        $this->resetErrorBag(['per_unit_amount', 'unit', 'freight_amount']);
+    }
+
+    public function calculateFreight()
+    {
+        if ($this->billing_type !== 'fixed' && $this->per_unit_amount && $this->unit && is_numeric($this->per_unit_amount) && is_numeric($this->unit) && $this->per_unit_amount > 0 && $this->unit > 0) {
+            $this->freight_amount = $this->per_unit_amount * $this->unit;
+        } else {
+            $this->freight_amount = null;
+        }
     }
 
     public function render()

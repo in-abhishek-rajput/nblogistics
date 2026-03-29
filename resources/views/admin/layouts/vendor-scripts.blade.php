@@ -10,7 +10,12 @@
 <script src="{{ asset('lib/tempusdominus/js/moment-timezone.min.js') }}"></script>
 <script src="{{ asset('lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js') }}"></script>
 
+
 <script src="{{ asset('js/main.js') }}"></script>
 <script src="{{ asset('js/custom.js') }}"></script>
+
+
+ <!-- SweetAlert CDN -->
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 @stack('scripts')

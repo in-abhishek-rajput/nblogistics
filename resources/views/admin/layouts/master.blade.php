@@ -40,6 +40,7 @@
 
     @include('admin.layouts.vendor-scripts')
      @livewireScripts
+    @stack('scripts')
 </body>
 
 </html>

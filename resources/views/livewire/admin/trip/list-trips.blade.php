@@ -210,6 +210,17 @@
                     offcanvas.hide();
                 }
             });
+
+            // For trip view modals
+            Livewire.on('show-confirm-modal', () => {
+                $('#confirmModal').modal('show');
+            });
+            Livewire.on('show-complete-modal', () => {
+                $('#completeModal').modal('show');
+            });
+            Livewire.on('close-modals', () => {
+                $('.modal').modal('hide');
+            });
         </script>
     @endscript
 </div>

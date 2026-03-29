@@ -85,27 +85,57 @@
                 <div class="row">
                     <div class="col-md-6">
                         <label class="form-label">Billing Type<span class="text-danger">*</span></label>
-                        <select wire:model="billing_type" class="form-select @error('billing_type') is-invalid @enderror">
+                        <select wire:model.live="billing_type" class="form-select @error('billing_type') is-invalid @enderror">
                             <option value="">Select Billing Type</option>
                             @foreach ($billingTypes as $key => $type)
-                                <option value="{{ $key }}">{{ $type }}</option>
+                                <option value="{{ $key }}" {{ $billing_type === $key || (!$billing_type && $key === 'fixed') ? 'selected' : '' }}>{{ $type }}</option>
                             @endforeach
                         </select>
                         @error('billing_type')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Freight Amount<span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
-                            <input type="number" step="0.01" wire:model="freight_amount" class="form-control @error('freight_amount') is-invalid @enderror"
-                                placeholder="0.00">
+                    @if($billing_type === 'fixed')
+                        <div class="col-md-6">
+                            <label class="form-label">Freight Amount<span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
+                                <input type="number" step="0.01" wire:model="freight_amount" class="form-control @error('freight_amount') is-invalid @enderror"
+                                    placeholder="0.00">
+                            </div>
+                            @error('freight_amount')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
-                        @error('freight_amount')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    @else
+                        <div class="col-md-6">
+                            <label class="form-label">Per Unit Amount<span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
+                                <input type="number" step="0.01" wire:model="per_unit_amount" class="form-control @error('per_unit_amount') is-invalid @enderror"
+                                    placeholder="0.00">
+                            </div>
+                            @error('per_unit_amount')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Unit<span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" wire:model="unit" class="form-control @error('unit') is-invalid @enderror"
+                                placeholder="0.00">
+                            @error('unit')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Freight Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
+                                <input type="number" step="0.01" wire:model="freight_amount" class="form-control" readonly
+                                    placeholder="Calculated">
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
