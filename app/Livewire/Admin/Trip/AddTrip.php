@@ -124,14 +124,14 @@ class AddTrip extends Component
             $this->dispatch('tripAdded');
 
             // Flash success message
-            $this->dispatch('flashMessage', 'success', 'Trip added successfully!');
+            $this->dispatch('flashMessage', 'success', 'Trip added successfully!')->to(\App\Livewire\Admin\Trip\ListTrips::class);
 
             // Close offcanvas
             $this->dispatch('closeOffcanvas', 'addTripOffcanvas');
 
         } catch (\Exception $e) {
             // Handle errors
-            session()->flash('error', 'Failed to add trip. Please try again.');
+            $this->dispatch('flashMessage', 'error', 'Failed to add trip. Please try again.')->to(\App\Livewire\Admin\Trip\ListTrips::class);
         } finally {
             $this->saving = false; // Re-enable button
         }

@@ -353,46 +353,289 @@
                             </div>
                         </div>
 
-                        <div class="d-space-b mb-2">
-                            <div>
-                                <span class="fs-14">(-) Advance</span><br>
-                                <a href="#" class="fs-14">Add Advance</a>
+                        {{-- Advances List --}}
+                        <div class="mb-3">
+                            <div class="d-space-b mb-2">
+                                <span class="fs-14">(-) Advances</span>
+                                <a href="#" class="fs-14 text-success" wire:click="openAdvanceForm">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Advance
+                                </a>
                             </div>
-                            <span class="text-dark">
-                                <i class="fa fa-rupee-sign me-1 fs-14"></i>
-                                {{ number_format($trip->advance_amount ?? 0, 2) }}
-                            </span>
+                            @if($trip->advances->count() > 0)
+                                <div class="border rounded p-2 mb-2" style="max-height: 150px; overflow-y: auto;">
+                                    @foreach($trip->advances as $advance)
+                                        <div class="d-space-b py-1 border-bottom">
+                                            <div>
+                                                <small class="text-muted">{{ $advance->payment_method }} - {{ $advance->payment_date->format('d M Y') }}</small><br>
+                                                <span class="fw-bold">{{ $advance->received_by_driver ? 'Driver' : 'Party' }}</span>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="text-danger">
+                                                    <i class="fa fa-rupee-sign fs-12"></i> {{ number_format($advance->amount, 2) }}
+                                                </span>
+                                                <a href="#" wire:click="editAdvance({{ $advance->id }})" class="ms-2 text-primary">
+                                                    <i class="bi bi-pencil-square fs-12"></i>
+                                                </a>
+                                                <a href="#" wire:click="deleteAdvance({{ $advance->id }})" class="ms-1 text-danger">
+                                                    <i class="bi bi-trash fs-12"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div class="text-end">
+                                <b class="text-danger">
+                                    <i class="fa fa-rupee-sign me-1 fs-14"></i>
+                                    {{ number_format($trip->advances->sum('amount'), 2) }}
+                                </b>
+                            </div>
                         </div>
 
-                        <div class="d-space-b mb-2">
-                            <div>
-                                <span class="fs-14">(+) Charges</span><br>
-                                <a href="#" class="fs-14">Add Charge</a>
+                        {{-- Advance Form --}}
+                        @if($showAdvanceForm)
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <h6 class="mb-3">{{ $editingAdvance ? 'Edit Advance' : 'Add Advance' }}</h6>
+                            <form wire:submit="saveAdvance">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Amount <span class="text-danger">*</span></label>
+                                        <input type="number" step="0.01" class="form-control @error('advance_amount') is-invalid @enderror" wire:model="advance_amount">
+                                        @error('advance_amount') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                                        <select class="form-select @error('advance_payment_method') is-invalid @enderror" wire:model="advance_payment_method">
+                                            @foreach($paymentMethods as $key => $label)
+                                                <option value="{{ $key }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('advance_payment_method') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Payment Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control @error('advance_payment_date') is-invalid @enderror" wire:model="advance_payment_date">
+                                        @error('advance_payment_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Received By</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" wire:model="advance_received_by_driver" id="advance_received_by_driver">
+                                            <label class="form-check-label" for="advance_received_by_driver">
+                                                Driver
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Notes</label>
+                                        <textarea class="form-control @error('advance_notes') is-invalid @enderror" rows="2" wire:model="advance_notes"></textarea>
+                                        @error('advance_notes') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button type="button" class="btn btn-secondary me-2" wire:click="cancelAdvanceForm">Cancel</button>
+                                    <button type="submit" class="btn btn-success" wire:loading.attr="disabled" wire:target="saveAdvance">
+                                        <span wire:loading.remove wire:target="saveAdvance">{{ $editingAdvance ? 'Update' : 'Add' }} Advance</span>
+                                        <span wire:loading wire:target="saveAdvance">
+                                            <span class="spinner-border spinner-border-sm me-1"></span> Saving...
+                                        </span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        @endif
+
+                        {{-- Charges List --}}
+                        <div class="mb-3">
+                            <div class="d-space-b mb-2">
+                                <span class="fs-14">(+) Charges</span>
+                                <a href="#" class="fs-14 text-warning" wire:click="openChargeForm">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Charge
+                                </a>
                             </div>
-                            <span class="text-dark">
-                                <i class="fa fa-rupee-sign me-1 fs-14"></i>
-                                {{ number_format($trip->extra_charges ?? 0, 2) }}
-                            </span>
+                            @if($trip->charges->count() > 0)
+                                <div class="border rounded p-2 mb-2" style="max-height: 150px; overflow-y: auto;">
+                                    @foreach($trip->charges as $charge)
+                                        <div class="d-space-b py-1 border-bottom">
+                                            <div>
+                                                <small class="text-muted">{{ $charge->charge_type }} - {{ $charge->date->format('d M Y') }}</small><br>
+                                                <span class="fw-bold">{{ $charge->charge_direction === 'add_to_bill' ? 'Add' : 'Reduce' }}</span>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="text-{{ $charge->charge_direction === 'add_to_bill' ? 'success' : 'danger' }}">
+                                                    <i class="fa fa-rupee-sign fs-12"></i> {{ number_format($charge->amount, 2) }}
+                                                </span>
+                                                <a href="#" wire:click="editCharge({{ $charge->id }})" class="ms-2 text-primary">
+                                                    <i class="bi bi-pencil-square fs-12"></i>
+                                                </a>
+                                                <a href="#" wire:click="deleteCharge({{ $charge->id }})" class="ms-1 text-danger">
+                                                    <i class="bi bi-trash fs-12"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div class="text-end">
+                                <b class="text-success">
+                                    <i class="fa fa-rupee-sign me-1 fs-14"></i>
+                                    {{ number_format($trip->charges->where('charge_direction', 'add_to_bill')->sum('amount') - $trip->charges->where('charge_direction', 'reduce_from_bill')->sum('amount'), 2) }}
+                                </b>
+                            </div>
                         </div>
 
-                        <div class="d-space-b mb-2">
-                            <div>
-                                <span class="fs-14">(-) Payments</span><br>
-                                <a href="#" class="fs-14">Add Payment</a>
-                            </div>
-                            <span class="text-dark">
-                                <i class="fa fa-rupee-sign me-1 fs-14"></i>
-                                {{ number_format($trip->paid_amount ?? 0, 2) }}
-                            </span>
+                        {{-- Charge Form --}}
+                        @if($showChargeForm)
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <h6 class="mb-3">{{ $editingCharge ? 'Edit Charge' : 'Add Charge' }}</h6>
+                            <form wire:submit="saveCharge">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Direction <span class="text-danger">*</span></label>
+                                        <select class="form-select @error('charge_direction') is-invalid @enderror" wire:model.live="charge_direction">
+                                            @foreach($chargeDirections as $key => $label)
+                                                <option value="{{ $key }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('charge_direction') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ $chargeTypeLabel }} <span class="text-danger">*</span></label>
+                                        <select class="form-select @error('charge_type') is-invalid @enderror" wire:model="charge_type">
+                                            @foreach($chargeTypeOptions as $key => $label)
+                                                <option value="{{ $key }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('charge_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Amount <span class="text-danger">*</span></label>
+                                        <input type="number" step="0.01" class="form-control @error('charge_amount') is-invalid @enderror" wire:model="charge_amount">
+                                        @error('charge_amount') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control @error('charge_date') is-invalid @enderror" wire:model="charge_date">
+                                        @error('charge_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Notes</label>
+                                        <textarea class="form-control @error('charge_notes') is-invalid @enderror" rows="2" wire:model="charge_notes"></textarea>
+                                        @error('charge_notes') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button type="button" class="btn btn-secondary me-2" wire:click="cancelChargeForm">Cancel</button>
+                                    <button type="submit" class="btn btn-success" wire:loading.attr="disabled" wire:target="saveCharge">
+                                        <span wire:loading.remove wire:target="saveCharge">{{ $editingCharge ? 'Update' : 'Add' }} Charge</span>
+                                        <span wire:loading wire:target="saveCharge">
+                                            <span class="spinner-border spinner-border-sm me-1"></span> Saving...
+                                        </span>
+                                    </button>
+                                </div>
+                            </form>
                         </div>
+                        @endif
+
+                        {{-- Payments List --}}
+                        <div class="mb-3">
+                            <div class="d-space-b mb-2">
+                                <span class="fs-14">(-) Payments</span>
+                                <a href="#" class="fs-14 text-primary" wire:click="openPaymentForm">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Payment
+                                </a>
+                            </div>
+                            @if($trip->payments->count() > 0)
+                                <div class="border rounded p-2 mb-2" style="max-height: 150px; overflow-y: auto;">
+                                    @foreach($trip->payments as $payment)
+                                        <div class="d-space-b py-1 border-bottom">
+                                            <div>
+                                                <small class="text-muted">{{ $payment->payment_method }} - {{ $payment->payment_date->format('d M Y') }}</small><br>
+                                                <span class="fw-bold">{{ $payment->received_by_driver ? 'Driver' : 'Party' }}</span>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="text-primary">
+                                                    <i class="fa fa-rupee-sign fs-12"></i> {{ number_format($payment->amount, 2) }}
+                                                </span>
+                                                <a href="#" wire:click="editPayment({{ $payment->id }})" class="ms-2 text-primary">
+                                                    <i class="bi bi-pencil-square fs-12"></i>
+                                                </a>
+                                                <a href="#" wire:click="deletePayment({{ $payment->id }})" class="ms-1 text-danger">
+                                                    <i class="bi bi-trash fs-12"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div class="text-end">
+                                <b class="text-primary">
+                                    <i class="fa fa-rupee-sign me-1 fs-14"></i>
+                                    {{ number_format($trip->payments->sum('amount'), 2) }}
+                                </b>
+                            </div>
+                        </div>
+
+                        {{-- Payment Form --}}
+                        @if($showPaymentForm)
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <h6 class="mb-3">{{ $editingPayment ? 'Edit Payment' : 'Add Payment' }}</h6>
+                            <form wire:submit="savePayment">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Amount <span class="text-danger">*</span></label>
+                                        <input type="number" step="0.01" class="form-control @error('payment_amount') is-invalid @enderror" wire:model="payment_amount">
+                                        @error('payment_amount') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                                        <select class="form-select @error('payment_payment_method') is-invalid @enderror" wire:model="payment_payment_method">
+                                            @foreach($paymentMethods as $key => $label)
+                                                <option value="{{ $key }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('payment_payment_method') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Payment Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control @error('payment_payment_date') is-invalid @enderror" wire:model="payment_payment_date">
+                                        @error('payment_payment_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Received By</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" wire:model="payment_received_by_driver" id="payment_received_by_driver">
+                                            <label class="form-check-label" for="payment_received_by_driver">
+                                                Driver
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Notes</label>
+                                        <textarea class="form-control @error('payment_notes') is-invalid @enderror" rows="2" wire:model="payment_notes"></textarea>
+                                        @error('payment_notes') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button type="button" class="btn btn-secondary me-2" wire:click="cancelPaymentForm">Cancel</button>
+                                    <button type="submit" class="btn btn-success" wire:loading.attr="disabled" wire:target="savePayment">
+                                        <span wire:loading.remove wire:target="savePayment">{{ $editingPayment ? 'Update' : 'Add' }} Payment</span>
+                                        <span wire:loading wire:target="savePayment">
+                                            <span class="spinner-border spinner-border-sm me-1"></span> Saving...
+                                        </span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        @endif
 
                         <hr>
 
                         @php
-                            $pendingBalance = ($trip->freight_amount ?? 0)
-                                            - ($trip->advance_amount  ?? 0)
-                                            - ($trip->paid_amount     ?? 0)
-                                            + ($trip->extra_charges   ?? 0);
+                            $totalAdvances = $trip->advances->sum('amount');
+                            $totalCharges = $trip->charges->where('charge_direction', 'add_to_bill')->sum('amount') - $trip->charges->where('charge_direction', 'reduce_from_bill')->sum('amount');
+                            $totalPayments = $trip->payments->sum('amount');
+                            $pendingBalance = ($trip->freight_amount ?? 0) - $totalAdvances - $totalPayments + $totalCharges;
                         @endphp
                         <div class="d-space-b mb-2">
                             <b class="text-dark">Pending Party Balance</b>
@@ -637,4 +880,7 @@
         </div>{{-- /modal-dialog --}}
     </div>{{-- /completeModal --}}
 
+
 </div>{{-- /row --}}
+
+

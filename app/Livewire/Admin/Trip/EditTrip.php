@@ -143,14 +143,14 @@ class EditTrip extends Component
             $this->dispatch('tripUpdated');
 
             // Flash success message
-            $this->dispatch('flashMessage', 'success', 'Trip updated successfully!');
+            $this->dispatch('flashMessage', 'success', 'Trip updated successfully!')->to(\App\Livewire\Admin\Trip\ListTrips::class);
 
             // Close offcanvas
             $this->dispatch('closeOffcanvas', 'editTripOffcanvas');
 
         } catch (\Exception $e) {
             // Handle errors
-            session()->flash('error', 'Failed to update trip. Please try again.');
+            $this->dispatch('flashMessage', 'error', 'Failed to update trip. Please try again.')->to(\App\Livewire\Admin\Trip\ListTrips::class);
         } finally {
             $this->saving = false; // Re-enable button
         }

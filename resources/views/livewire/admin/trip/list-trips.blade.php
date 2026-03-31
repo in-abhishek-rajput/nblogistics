@@ -120,8 +120,7 @@
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <a class="dropdown-item text-danger" href="#" wire:click="deleteTrip({{ $trip->id }})"
-                                           onclick="return confirm('Are you sure you want to delete this trip?')">
+                                        <a class="dropdown-item text-danger" href="#" wire:click="confirmDeleteTrip({{ $trip->id }})">
                                             <i class="bi bi-trash me-2"></i>Delete
                                         </a>
                                     </li>
@@ -189,6 +188,27 @@
             @endif
         </div>
     </div>
+
+    {{-- Delete Confirmation Modal --}}
+    @if ($showDeleteConfirm)
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" wire:click="cancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this trip? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" wire:click="cancelDelete">Cancel</button>
+                    <button type="button" class="btn btn-danger" wire:click="deleteTrip">Delete Trip</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- Scripts for offcanvas --}}
     @script

@@ -29,6 +29,13 @@ class ListTrips extends Component
     public $flashMessage = null;
     public $flashType = null;
 
+    // Delete confirmation
+    public $showDeleteConfirm = false;
+    public $deleteTripId = null;
+
+    // Refresh trigger for forcing re-render after updates
+    public $refreshTrigger = 0;
+
     // Listeners for refreshing table after add/edit
     protected $listeners = [
         'tripAdded' => 'onTripAdded',
@@ -78,14 +85,34 @@ class ListTrips extends Component
         $this->dispatch('showEditOffcanvas');
     }
 
-    // Delete trip with confirmation (soft delete)
-    public function deleteTrip($id)
+    // Show delete confirmation
+    public function confirmDeleteTrip($id)
     {
-        $trip = Trip::findOrFail($id);
+        $this->deleteTripId = $id;
+        $this->showDeleteConfirm = true;
+    }
+
+    // Cancel delete
+    public function cancelDelete()
+    {
+        $this->showDeleteConfirm = false;
+        $this->deleteTripId = null;
+    }
+
+    // Delete trip with confirmation (soft delete)
+    public function deleteTrip()
+    {
+        if (!$this->deleteTripId) return;
+
+        $trip = Trip::findOrFail($this->deleteTripId);
         $trip->deleted_by = auth()->id(); // Assuming authentication
         $trip->save();
         $trip->delete();
-        $this->dispatch('flashMessage', 'success', 'Trip deleted successfully!');
+
+        $this->showDeleteConfirm = false;
+        $this->deleteTripId = null;
+        $this->flashMessage = 'Trip deleted successfully!';
+        $this->flashType = 'success';
     }
 
     // Refresh table after trip added
@@ -97,7 +124,8 @@ class ListTrips extends Component
     // Refresh table after trip updated
     public function onTripUpdated()
     {
-        // No need to reset page, record stays in place
+        // Force re-render to show updated data
+        $this->refreshTrigger++;
     }
 
     // Show flash message

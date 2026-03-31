@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Driver;
 use App\Models\Truck;
+use App\Models\TripAdvance;
+use App\Models\TripCharge;
+use App\Models\TripPayment;
 
 class Trip extends Model
 {
@@ -26,6 +30,7 @@ class Trip extends Model
         'per_unit_amount',
         'unit',
         'freight_amount',
+        'pending_freight_amount',
         'start_date',
         'start_km',
         'end_date',
@@ -137,6 +142,30 @@ class Trip extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(Driver::class);
+    }
+
+    /**
+     * Relationship with Trip Advances.
+     */
+    public function advances(): HasMany
+    {
+        return $this->hasMany(TripAdvance::class);
+    }
+
+    /**
+     * Relationship with Trip Charges.
+     */
+    public function charges(): HasMany
+    {
+        return $this->hasMany(TripCharge::class);
+    }
+
+    /**
+     * Relationship with Trip Payments.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(TripPayment::class);
     }
 
     /**
