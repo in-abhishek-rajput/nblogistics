@@ -76,6 +76,14 @@
                             @endif
                         </a>
                     </th>
+                    <th scope="col">
+                        <a href="#" wire:click.prevent="sortBy('pending_freight_amount')" class="text-decoration-none">
+                            Pending Party Balance
+                            @if ($sortColumn === 'pending_freight_amount')
+                                <i class="bi bi-chevron-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                            @endif
+                        </a>
+                    </th>
                     <th scope="col" style="width: 100px">
                         <a href="#" wire:click.prevent="sortBy('status')" class="text-decoration-none">
                             Status
@@ -95,6 +103,7 @@
                         <td class="border">{{ $trip->origin }} → {{ $trip->destination }}</td>
                         <td class="border">{{ $billingTypes[$trip->billing_type] ?? ucfirst(str_replace('_', ' ', $trip->billing_type)) }}</td>
                         <td class="border"><i class="fas fa-rupee-sign"></i> {{ number_format($trip->freight_amount, 2) }}</td>
+                        <td class="border"><i class="fas fa-rupee-sign"></i> {{ number_format($trip->pending_freight_amount, 2) }}</td>
                         <td class="border">
                             <span class="badge bg-{{ $statuses[$trip->status]['color'] ?? 'secondary' }}">
                                 <i class="bi {{ $statuses[$trip->status]['icon'] ?? 'bi-question' }}"></i>
@@ -130,7 +139,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center py-4">
+                        <td colspan="8" class="text-center py-4">
                             <div class="text-muted">
                                 <i class="bi bi-truck fs-1"></i>
                                 <p class="mt-2">No trips found.</p>

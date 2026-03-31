@@ -132,6 +132,9 @@ class EditTrip extends Component
             $validated['freight_amount'] = $this->per_unit_amount * $this->unit;
         }
 
+        // Set pending_freight_amount equal to freight_amount initially
+        $validated['pending_freight_amount'] = $validated['freight_amount'];
+
         try {
             // Update trip using validated data
             $validated['updated_by'] = auth()->id();

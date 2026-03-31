@@ -116,7 +116,7 @@
                                         <span class="fs-14">Party Balance</span><br>
                                         <b class="text-success">
                                             <i class="fas fa-rupee-sign fs-14"></i>
-                                            {{ number_format($trip->freight_amount ?? 0, 2) }}
+                                            {{ number_format($trip->pending_freight_amount ?? 0, 2) }}
                                         </b>
                                     </div>
                                 </div>

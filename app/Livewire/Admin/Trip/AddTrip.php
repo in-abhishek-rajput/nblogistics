@@ -110,6 +110,9 @@ class AddTrip extends Component
             $validated['freight_amount'] = $this->per_unit_amount * $this->unit;
         }
 
+        // Set pending_freight_amount equal to freight_amount initially
+        $validated['pending_freight_amount'] = $validated['freight_amount'];
+
         try {
             // Create trip using validated data
             $validated['created_by'] = auth()->id();

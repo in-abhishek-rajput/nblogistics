@@ -59,6 +59,7 @@ class Trip extends Model
         'pod_submitted_date' => 'datetime',
         'settled_date' => 'datetime',
         'freight_amount' => 'decimal:2',
+        'pending_freight_amount' => 'decimal:2',
         'per_unit_amount' => 'decimal:2',
         'unit' => 'decimal:2',
     ];
