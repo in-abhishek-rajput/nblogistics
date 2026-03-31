@@ -63,6 +63,7 @@ class ViewTrip extends Component
     public bool $showAdvanceForm = false;
     public bool $showChargeForm = false;
     public bool $showPaymentForm = false;
+    public bool $showExpenseForm = false;
 
     // ─── Advance Form Fields ──────────────────────────────────────────────────
 
@@ -95,6 +96,17 @@ class ViewTrip extends Component
     public string $payment_notes = '';
     public bool $savingPayment = false;
 
+    // ─── Expense Form Fields ──────────────────────────────────────────────────
+
+    public ?TripExpense $editingExpense = null;
+    public string $expense_type = '';
+    public float $expense_amount = 0;
+    public string $expense_date = '';
+    public string $expense_payment_mode = 'cash';
+    public bool $expense_add_to_party_bill = false;
+    public string $expense_notes = '';
+    public bool $savingExpense = false;
+
     // ─── Options ──────────────────────────────────────────────────────────────
 
     public array $paymentMethods = [
@@ -118,13 +130,31 @@ class ViewTrip extends Component
         'others' => 'Others',
     ];
 
+    public array $expenseTypeOptions = [
+        'toll' => 'Toll',
+        'parking' => 'Parking',
+        'loading_unloading' => 'Loading/Unloading',
+        'fuel' => 'Fuel',
+        'maintenance' => 'Maintenance',
+        'others' => 'Others',
+    ];
+
+    public array $expensePaymentModeOptions = [
+        'cash' => 'Cash',
+        'credit' => 'Credit',
+        'paid_by_driver' => 'Paid By Driver',
+        'online' => 'Online',
+    ];
+
     protected $listeners = [
         'advanceUpdated' => 'updatePendingFreightAmount',
         'chargeUpdated' => 'updatePendingFreightAmount',
         'paymentUpdated' => 'updatePendingFreightAmount',
+        'expenseUpdated' => 'reloadTrip',
         'deleteAdvance' => 'updatePendingFreightAmount',
         'deleteCharge' => 'updatePendingFreightAmount',
         'deletePayment' => 'updatePendingFreightAmount',
+        'deleteExpense' => 'reloadTrip',
         'flashMessage' => 'relayFlashMessage',
     ];
 
@@ -183,7 +213,7 @@ class ViewTrip extends Component
      */
     private function reloadTrip(): void
     {
-        $this->trip = Trip::with(['party', 'truck', 'driver', 'advances', 'charges', 'payments'])->findOrFail($this->tripId);
+        $this->trip = Trip::with(['party', 'truck', 'driver', 'advances', 'charges', 'payments', 'expenses'])->findOrFail($this->tripId);
     }
 
     /**

@@ -629,6 +629,45 @@
                         </div>
                         @endif
 
+                        {{-- Expenses --}}
+                        <div class="mb-3">
+                            <div class="d-space-b mb-2">
+                                <span class="fs-14">(-) Expenses</span>
+                                <a href="#" class="fs-14 text-warning" wire:click="openExpenseModal({{ $tripId }})">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Expense
+                                </a>
+                            </div>
+                            @if($trip->expenses->count() > 0)
+                                <div class="border rounded p-2 mb-2" style="max-height: 150px; overflow-y: auto;">
+                                    @foreach($trip->expenses as $expense)
+                                        <div class="d-space-b py-1 border-bottom">
+                                            <div>
+                                                <small class="text-muted">{{ $expense->expense_type }} - {{ $expense->expense_date->format('d M Y') }}</small><br>
+                                                <span class="fw-bold">{{ $expense->payment_mode }}</span>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="text-warning">
+                                                    <i class="fa fa-rupee-sign fs-12"></i> {{ number_format($expense->amount, 2) }}
+                                                </span>
+                                                <a href="#" wire:click="$dispatch('editExpense', { expenseId: {{ $expense->id }}, tripId: {{ $tripId }} })" class="ms-2 text-primary">
+                                                    <i class="bi bi-pencil-square fs-12"></i>
+                                                </a>
+                                                <a href="#" wire:click="$dispatch('deleteExpense', { expenseId: {{ $expense->id }}, tripId: {{ $tripId }} })" class="ms-1 text-danger">
+                                                    <i class="bi bi-trash fs-12"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div class="text-end">
+                                <b class="text-warning">
+                                    <i class="fa fa-rupee-sign me-1 fs-14"></i>
+                                    {{ number_format($trip->expenses->sum('amount'), 2) }}
+                                </b>
+                            </div>
+                        </div>
+
                         <hr>
 
                         @php
@@ -786,6 +825,11 @@
             </div>
         </div>
     </div>{{-- /confirmModal --}}
+
+    {{-- ═══════════════════════════════════════════════════════════════
+         4b. EXPENSE MODAL
+    ═══════════════════════════════════════════════════════════════ --}}
+    @livewire('admin.trip.trip-expense-modal')
 
     {{-- ═══════════════════════════════════════════════════════════════
          4b. COMPLETE TRIP MODAL

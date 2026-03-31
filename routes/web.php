@@ -38,4 +38,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('builty', BiltyController::class);
     Route::resource('reports', ReportsController::class);
     Route::resource('profile', ProfileController::class);
+
+    // Trip Expenses
+    Route::get('trip-expenses', function () {
+        return view('admin.trip-expenses.list');
+    })->name('trip-expenses');
 });

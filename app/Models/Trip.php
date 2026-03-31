@@ -11,6 +11,7 @@ use App\Models\Driver;
 use App\Models\Truck;
 use App\Models\TripAdvance;
 use App\Models\TripCharge;
+use App\Models\TripExpense;
 use App\Models\TripPayment;
 
 class Trip extends Model
@@ -167,6 +168,14 @@ class Trip extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(TripPayment::class);
+    }
+
+    /**
+     * Relationship with Trip Expenses.
+     */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(TripExpense::class);
     }
 
     /**
