@@ -349,7 +349,6 @@
                                     <i class="fa fa-rupee-sign me-1 fs-14"></i>
                                     {{ number_format($trip->freight_amount ?? 0, 2) }}
                                 </b>
-                                <a href="#"><i class="fa fa-pen fs-14 ms-2"></i></a>
                             </div>
                         </div>
 
@@ -629,11 +628,74 @@
                         </div>
                         @endif
 
+                        {{-- Expense Form --}}
+                        @if($showExpenseForm)
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <h6 class="mb-3">{{ $editingExpense ? 'Edit Expense' : 'Add Expense' }}</h6>
+                            <form wire:submit="saveExpense">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Expense Type <span class="text-danger">*</span></label>
+                                        <select class="form-select @error('expense_type') is-invalid @enderror" wire:model="expense_type">
+                                            <option value="">Select Type</option>
+                                            @foreach($expenseTypeOptions as $key => $label)
+                                                <option value="{{ $key }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('expense_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Amount <span class="text-danger">*</span></label>
+                                        <input type="number" step="0.01" class="form-control @error('expense_amount') is-invalid @enderror" wire:model="expense_amount">
+                                        @error('expense_amount') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Expense Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control @error('expense_date') is-invalid @enderror" wire:model="expense_date">
+                                        @error('expense_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Payment Mode <span class="text-danger">*</span></label>
+                                        <select class="form-select @error('expense_payment_mode') is-invalid @enderror" wire:model="expense_payment_mode">
+                                            @foreach($expensePaymentModeOptions as $key => $label)
+                                                <option value="{{ $key }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('expense_payment_mode') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Add to Party Bill</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" wire:model="expense_add_to_party_bill" id="expense_add_to_party_bill">
+                                            <label class="form-check-label" for="expense_add_to_party_bill">
+                                                Yes
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Notes</label>
+                                        <textarea class="form-control @error('expense_notes') is-invalid @enderror" rows="2" wire:model="expense_notes"></textarea>
+                                        @error('expense_notes') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button type="button" class="btn btn-secondary me-2" wire:click="cancelExpenseForm">Cancel</button>
+                                    <button type="submit" class="btn btn-success" wire:loading.attr="disabled" wire:target="saveExpense">
+                                        <span wire:loading.remove wire:target="saveExpense">{{ $editingExpense ? 'Update' : 'Add' }} Expense</span>
+                                        <span wire:loading wire:target="saveExpense">
+                                            <span class="spinner-border spinner-border-sm me-1"></span> Saving...
+                                        </span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        @endif
+
                         {{-- Expenses --}}
                         <div class="mb-3">
                             <div class="d-space-b mb-2">
                                 <span class="fs-14">(-) Expenses</span>
-                                <a href="#" class="fs-14 text-warning" wire:click="openExpenseModal({{ $tripId }})">
+                                <a href="#" class="fs-14 text-warning" wire:click="openExpenseForm">
                                     <i class="bi bi-plus-circle me-1"></i>Add Expense
                                 </a>
                             </div>
@@ -649,10 +711,10 @@
                                                 <span class="text-warning">
                                                     <i class="fa fa-rupee-sign fs-12"></i> {{ number_format($expense->amount, 2) }}
                                                 </span>
-                                                <a href="#" wire:click="$dispatch('editExpense', { expenseId: {{ $expense->id }}, tripId: {{ $tripId }} })" class="ms-2 text-primary">
+                                                <a href="#" wire:click="editExpense({{ $expense->id }})" class="ms-2 text-primary">
                                                     <i class="bi bi-pencil-square fs-12"></i>
                                                 </a>
-                                                <a href="#" wire:click="$dispatch('deleteExpense', { expenseId: {{ $expense->id }}, tripId: {{ $tripId }} })" class="ms-1 text-danger">
+                                                <a href="#" wire:click="deleteExpense({{ $expense->id }})" class="ms-1 text-danger">
                                                     <i class="bi bi-trash fs-12"></i>
                                                 </a>
                                             </div>
@@ -701,12 +763,6 @@
         <div class="bg-light p-0 shadow-sm mb-2">
             <div class="d-space-b p-3">
                 <h6 class="mb-0">Trip Profit</h6>
-                <a href="#"
-                   class="btn btn-sm btn-outline-primary"
-                   data-bs-toggle="modal"
-                   data-bs-target="#addExpenses">
-                    <i class="bi bi-plus me-1"></i>Add Expenses
-                </a>
             </div>
             <hr class="my-0">
             <div class="trip-profit-details bg-light p-3">
@@ -714,32 +770,46 @@
                 <div class="d-space-b mb-2">
                     <label class="text-dark"><b>(+) Revenue</b></label>
                     <label class="text-primary">
-                        <b><i class="fas fa-rupee-sign fs-14"></i> {{ number_format($trip->freight_amount ?? 0, 2) }}</b>
+                        <b><i class="fas fa-rupee-sign fs-14"></i> {{ number_format($trip->pending_freight_amount ?? 0, 2) }}</b>
                     </label>
                 </div>
+                
                 <div class="d-space-b fs-14 mb-2">
                     <label class="text-dark">{{ $trip->party->name ?? 'N/A' }}</label>
                     <label class="text-dark">
                         <i class="fas fa-rupee-sign fs-14"></i> {{ number_format($trip->freight_amount ?? 0, 2) }}
                     </label>
                 </div>
+                @if($totalCharges != 0)
+                <div class="d-space-b fs-14 mb-2">
+                    <label class="text-dark">Charges</label>
+                    <label class="text-dark">
+                        <i class="fas fa-rupee-sign fs-14"></i> {{ number_format($totalCharges ?? 0, 2) }}
+                    </label>
+                </div>
+                @endif
+                @if($totalPayments != 0)
+                <div class="d-space-b fs-14 mb-2">
+                    <label class="text-dark">Payment</label>
+                    <label class="text-dark">
+                        <i class="fas fa-rupee-sign fs-14"></i> {{ number_format($totalPayments ?? 0, 2) }}
+                    </label>
+                </div>
+                @endif
 
                 <div class="d-space-b mb-2">
                     <label class="text-dark"><b>(-) Expense</b></label>
                     <label class="text-primary">
-                        <b><i class="fas fa-rupee-sign fs-14"></i> {{ number_format($trip->total_expense ?? 0, 2) }}</b>
+                        <b><i class="fas fa-rupee-sign fs-14"></i>  {{ number_format($trip->expenses->sum('amount'), 2) }}</b>
                     </label>
                 </div>
 
                 <hr>
 
-                @php
-                    $profit = ($trip->freight_amount ?? 0) - ($trip->total_expense ?? 0);
-                @endphp
                 <div class="d-space-b">
                     <label class="text-dark"><b>Profit</b></label>
-                    <label class="{{ $profit >= 0 ? 'text-success' : 'text-danger' }}">
-                        <b><i class="fas fa-rupee-sign fs-14"></i> {{ number_format($profit, 2) }}</b>
+                    <label class="{{ $trip->profit >= 0 ? 'text-success' : 'text-danger' }}">
+                        <b><i class="fas fa-rupee-sign fs-14"></i> {{ number_format($trip->profit, 2) }}</b>
                     </label>
                 </div>
 

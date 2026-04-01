@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Trip;
 use App\Models\Trip;
 use App\Models\TripAdvance;
 use App\Models\TripCharge;
+use App\Models\TripExpense;
 use App\Models\TripPayment;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
@@ -150,11 +151,12 @@ class ViewTrip extends Component
         'advanceUpdated' => 'updatePendingFreightAmount',
         'chargeUpdated' => 'updatePendingFreightAmount',
         'paymentUpdated' => 'updatePendingFreightAmount',
-        'expenseUpdated' => 'reloadTrip',
+        'expenseUpdated' => 'updatePendingFreightAmount',
         'deleteAdvance' => 'updatePendingFreightAmount',
         'deleteCharge' => 'updatePendingFreightAmount',
         'deletePayment' => 'updatePendingFreightAmount',
-        'deleteExpense' => 'reloadTrip',
+        'deleteExpense' => 'updatePendingFreightAmount',
+        'editExpense' => 'editExpense',
         'flashMessage' => 'relayFlashMessage',
     ];
 
@@ -217,7 +219,7 @@ class ViewTrip extends Component
     }
 
     /**
-     * Recalculates and updates the pending freight amount based on advances, charges, and payments.
+     * Recalculates and updates the pending freight amount based on advances, charges, payments, and expenses.
      */
     public function updatePendingFreightAmount(): void
     {
@@ -225,6 +227,7 @@ class ViewTrip extends Component
 
         $totalAdvances = $this->trip->advances->sum('amount');
         $totalPayments = $this->trip->payments->sum('amount');
+        $totalExpenses = $this->trip->expenses->sum('amount') ?? 0;      
 
         $totalCharges = 0;
         foreach ($this->trip->charges as $charge) {
@@ -236,9 +239,11 @@ class ViewTrip extends Component
         }
 
         $pendingFreight = $this->trip->freight_amount - $totalAdvances - $totalPayments + $totalCharges;
-
+        $profit = $pendingFreight - $totalExpenses;
+        // dd($pendingFreight, $totalExpenses, $profit);
         $this->trip->update([
             'pending_freight_amount' => max(0, $pendingFreight), // Ensure not negative
+            'profit' =>  max(0, $profit),
             'updated_by' => auth()->id(),
         ]);
 
@@ -290,6 +295,22 @@ class ViewTrip extends Component
             session()->flash('success', 'Payment deleted successfully.');
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to delete payment. Please try again.');
+        }
+    }
+
+    /**
+     * Delete an expense record.
+     */
+    public function deleteExpense(int $expenseId): void
+    {
+        try {
+            $expense = $this->trip->expenses()->findOrFail($expenseId);
+            $expense->delete();
+
+            $this->updatePendingFreightAmount();
+            session()->flash('success', 'Expense deleted successfully.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to delete expense. Please try again.');
         }
     }
 
@@ -759,6 +780,104 @@ class ViewTrip extends Component
             'payment_date' => $this->payment_payment_date,
             'received_by_driver' => $this->payment_received_by_driver,
             'notes' => $this->payment_notes,
+        ];
+    }
+
+    public function openExpenseForm(): void
+    {
+        $this->resetExpenseForm();
+        $this->showExpenseForm = true;
+        $this->showAdvanceForm = false;
+        $this->showChargeForm = false;
+        $this->showPaymentForm = false;
+    }
+
+    public function editExpense(int $expenseId): void
+    {
+        $this->editingExpense = TripExpense::where('trip_id', $this->tripId)->findOrFail($expenseId);
+        $this->expense_type = $this->editingExpense->expense_type;
+        $this->expense_amount = $this->editingExpense->amount;
+        $this->expense_date = $this->editingExpense->expense_date->format('Y-m-d');
+        $this->expense_payment_mode = $this->editingExpense->payment_mode;
+        $this->expense_add_to_party_bill = $this->editingExpense->add_to_party_bill;
+        $this->expense_notes = $this->editingExpense->notes ?? '';
+        $this->showExpenseForm = true;
+        $this->showAdvanceForm = false;
+        $this->showChargeForm = false;
+        $this->showPaymentForm = false;
+    }
+
+    public function saveExpense(): void
+    {
+        $this->validateExpense();
+        $this->savingExpense = true;
+
+        try {
+            if ($this->editingExpense) {
+                $this->editingExpense->update($this->getExpenseData());
+                $message = 'Expense updated successfully.';
+            } else {
+                TripExpense::create(array_merge($this->getExpenseData(), ['trip_id' => $this->tripId]));
+                $message = 'Expense added successfully.';
+            }
+
+            $this->resetExpenseForm();
+            $this->updatePendingFreightAmount();
+            session()->flash('success', $message);
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to save expense. Please try again.');
+        } finally {
+            $this->savingExpense = false;
+        }
+    }
+
+    public function cancelExpenseForm(): void
+    {
+        $this->resetExpenseForm();
+    }
+
+    private function resetExpenseForm(): void
+    {
+        $this->editingExpense = null;
+        $this->expense_type = '';
+        $this->expense_amount = 0;
+        $this->expense_date = '';
+        $this->expense_payment_mode = 'cash';
+        $this->expense_add_to_party_bill = false;
+        $this->expense_notes = '';
+        $this->showExpenseForm = false;
+        $this->resetErrorBag();
+    }
+
+    private function validateExpense(): void
+    {
+        $this->validate([
+            'expense_type' => 'required|string|in:' . implode(',', array_keys($this->expenseTypeOptions)),
+            'expense_amount' => 'required|numeric|min:0.01|max:99999999.99',
+            'expense_date' => 'required|date|before_or_equal:today',
+            'expense_payment_mode' => 'required|string|in:' . implode(',', array_keys($this->expensePaymentModeOptions)),
+            'expense_add_to_party_bill' => 'boolean',
+            'expense_notes' => 'nullable|string|max:500',
+        ], [
+            'expense_type.required' => 'Expense type is required.',
+            'expense_amount.required' => 'Expense amount is required.',
+            'expense_amount.min' => 'Amount must be greater than zero.',
+            'expense_date.required' => 'Expense date is required.',
+            'expense_date.before_or_equal' => 'Expense date cannot be in the future.',
+            'expense_payment_mode.required' => 'Payment mode is required.',
+        ]);
+    }
+
+    private function getExpenseData(): array
+    {
+        return [
+            'expense_type' => $this->expense_type,
+            'amount' => $this->expense_amount,
+            'expense_date' => $this->expense_date,
+            'payment_mode' => $this->expense_payment_mode,
+            'add_to_party_bill' => $this->expense_add_to_party_bill,
+            'notes' => $this->expense_notes,
         ];
     }
 

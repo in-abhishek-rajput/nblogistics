@@ -32,6 +32,7 @@ class Trip extends Model
         'unit',
         'freight_amount',
         'pending_freight_amount',
+        'profit',
         'start_date',
         'start_km',
         'end_date',
@@ -61,6 +62,7 @@ class Trip extends Model
         'settled_date' => 'datetime',
         'freight_amount' => 'decimal:2',
         'pending_freight_amount' => 'decimal:2',
+        'profit' => 'decimal:2',
         'per_unit_amount' => 'decimal:2',
         'unit' => 'decimal:2',
     ];
