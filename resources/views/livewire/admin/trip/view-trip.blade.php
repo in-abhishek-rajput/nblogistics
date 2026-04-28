@@ -42,7 +42,7 @@
                     <div class="d-row-set">
                         <i class="fa fa-truck text-dark fs-3"></i>
                         <div class="mob-font">
-                            <h6 class="mb-0">{{ $trip->truck->truck_number ?? 'N/A' }}</h6>
+                            <h6 class="mb-0">{{ $trip->truck->truck_number ?? $trip->truck_name }}</h6>
                             <a href="#" class="fs-14 mob-font">
                                 View Trucks <i class="bi bi-chevron-double-right"></i>
                             </a>
@@ -59,7 +59,7 @@
                             <img src="{{ asset('img/steering-wheel.png') }}" width="40" alt="Driver" />
                             <div class="mob-font">
                                 <span>Driver Name</span>
-                                <h6 class="mb-0">{{ $trip->driver->name ?? 'N/A' }}</h6>
+                                <h6 class="mb-0">{{ $trip->driver->name ?? $trip->driver_name }}</h6>
                             </div>
                         </div>
                         <a href="#" class="fs-14"><i class="bi bi-chevron-right"></i></a>
@@ -110,7 +110,7 @@
                                 <div class="border rounded-2 p-2 d-space-b mb-2">
                                     <div>
                                         <span class="fs-14">Party Name</span><br>
-                                        <b class="text-primary">{{ $trip->party->name ?? 'N/A' }}</b>
+                                        <b class="text-primary">{{ $trip->party->name ?? $trip->party_name }}</b>
                                     </div>
                                     <div>
                                         <span class="fs-14">Party Balance</span><br>

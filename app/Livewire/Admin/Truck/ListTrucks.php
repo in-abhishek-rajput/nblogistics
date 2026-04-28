@@ -55,6 +55,13 @@ class ListTrucks extends Component
         $this->resetPage();
     }
 
+    // Reset all filters
+    public function resetFilters()
+    {
+        $this->reset(['search', 'statusFilter', 'typeFilter', 'ownershipFilter']);
+        $this->resetPage();
+    }
+
     // Sort method to toggle direction or change column
     public function sortBy($column)
     {

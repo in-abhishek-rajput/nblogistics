@@ -23,8 +23,14 @@ class Trip extends Model
      */
     protected $fillable = [
         'party_id',
+        'party_name',
+        'party_manual_entry',
         'truck_id',
+        'truck_name',
+        'truck_manual_entry',
         'driver_id',
+        'driver_name',
+        'driver_manual_entry',
         'origin',
         'destination',
         'billing_type',
@@ -225,5 +231,21 @@ class Trip extends Model
                 Truck::where('id', $originalTruckId)->update(['status' => $availableStatus]);
             }
         });
+    }
+
+    /**
+     * Alias for start_date to match the requested trip_date logic.
+     */
+    public function getTripDateAttribute()
+    {
+        return $this->start_date;
+    }
+
+    /**
+     * Formatted trip date attribute.
+     */
+    public function getTripDateFormattedAttribute()
+    {
+        return $this->start_date ? $this->start_date->format('d M Y') : '-';
     }
 }

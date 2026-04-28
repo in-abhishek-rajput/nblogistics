@@ -9,13 +9,20 @@
         </div>
     @endif
 
+    {{-- Action Bar --}}
+    <div class="d-flex justify-content-end mb-3">
+        <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#addTripOffcanvas" aria-controls="addTripOffcanvas">
+            <i class="bi bi-plus"></i> Add Trip
+        </button>
+    </div>
+
     {{-- Search and Filter Section --}}
-    <div class="row mb-3">
-        <div class="col-md-4">
+    <div class="row g-2 mb-3">
+        <div class="col-12 col-md">
             <input type="text" wire:model.live.debounce.300ms="search" class="form-control"
                 placeholder="Search by party, truck, or route..." />
         </div>
-        <div class="col-md-3">
+        <div class="col-12 col-md">
             <select wire:model.live="statusFilter" class="form-select">
                 <option value="">All Statuses</option>
                 @foreach ($statuses as $key => $status)
@@ -23,7 +30,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-12 col-md">
             <select wire:model.live="billingTypeFilter" class="form-select">
                 <option value="">All Billing Types</option>
                 @foreach ($billingTypes as $key => $type)
@@ -31,9 +38,15 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-2">
-            <button type="button" class="btn btn-primary w-100" data-bs-toggle="offcanvas" data-bs-target="#addTripOffcanvas" aria-controls="addTripOffcanvas">
-                <i class="bi bi-plus"></i> Add Trip
+        <div class="col-12 col-md">
+            <input type="date" wire:model.lazy="from_date" class="form-control" title="From Date" aria-label="From Date">
+        </div>
+        <div class="col-12 col-md">
+            <input type="date" wire:model.lazy="to_date" class="form-control" title="To Date" aria-label="To Date">
+        </div>
+        <div class="col-12 col-md-auto">
+            <button type="button" wire:click="resetFilters" class="btn btn-secondary w-100" title="Reset Filters">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
             </button>
         </div>
     </div>
@@ -60,6 +73,8 @@
                         </a>
                     </th>
                     <th scope="col">Route</th>
+                    {{-- Added trip date column --}}
+                    <th scope="col">Trip Date</th>
                     <th scope="col">
                         <a href="#" wire:click.prevent="sortBy('billing_type')" class="text-decoration-none">
                             Billing Type
@@ -72,14 +87,6 @@
                         <a href="#" wire:click.prevent="sortBy('freight_amount')" class="text-decoration-none">
                             Freight Amount
                             @if ($sortColumn === 'freight_amount')
-                                <i class="bi bi-chevron-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
-                            @endif
-                        </a>
-                    </th>
-                    <th scope="col">
-                        <a href="#" wire:click.prevent="sortBy('pending_freight_amount')" class="text-decoration-none">
-                            Pending Party Balance
-                            @if ($sortColumn === 'pending_freight_amount')
                                 <i class="bi bi-chevron-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
                             @endif
                         </a>
@@ -98,12 +105,20 @@
             <tbody>
                 @forelse($trips as $trip)
                     <tr>
-                        <td class="border">{{ $trip->party->name ?? 'N/A' }}</td>
-                        <td class="border">{{ $trip->truck->truck_number ?? 'N/A' }}</td>
+                        <td class="border">{{ $trip->party->name ?? $trip->party_name }}</td>
+                        <td class="border">{{ $trip->truck->truck_number ?? $trip->truck_name }}</td>
                         <td class="border">{{ $trip->origin }} → {{ $trip->destination }}</td>
+                        {{-- Added trip date column --}}
+                        <td class="border">{{ $trip->trip_date_formatted ?? '-' }}</td>
                         <td class="border">{{ $billingTypes[$trip->billing_type] ?? ucfirst(str_replace('_', ' ', $trip->billing_type)) }}</td>
-                        <td class="border"><i class="fas fa-rupee-sign"></i> {{ number_format($trip->freight_amount, 2) }}</td>
-                        <td class="border"><i class="fas fa-rupee-sign"></i> {{ number_format($trip->pending_freight_amount, 2) }}</td>
+                        {{-- Merged freight + pending amount --}}
+                        <td class="border">
+                            <i class="fas fa-rupee-sign"></i> {{ number_format($trip->freight_amount, 2) }}
+                            <br>
+                            <small class="text-danger">
+                                Pending: <i class="fas fa-rupee-sign"></i> {{ number_format($trip->pending_freight_amount, 2) }}
+                            </small>
+                        </td>
                         <td class="border">
                             <span class="badge bg-{{ $statuses[$trip->status]['color'] ?? 'secondary' }}">
                                 <i class="bi {{ $statuses[$trip->status]['icon'] ?? 'bi-question' }}"></i>

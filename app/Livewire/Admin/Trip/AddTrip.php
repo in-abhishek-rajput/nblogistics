@@ -7,18 +7,20 @@ use App\Models\Trip;
 use App\Models\Truck;
 use App\Models\Driver;
 use Livewire\Component;
+use Livewire\Attributes\Computed;
 
 class AddTrip extends Component
 {
     // Form properties - public for Livewire binding
     public $party_id = null;
     public $truck_id = null;
+    public $driver_id = null;
     public  $origin = null;
     public  $destination = null;
     public  $billing_type = 'fixed';
-     public  $per_unit_amount = null;
-     public  $unit = null;
-     public  $freight_amount = null;
+     public $per_unit_amount = '';
+     public $unit = '';
+     public $freight_amount = 0;
      public  $start_date = null;
      public  $start_km = null;
      public  $end_date = null;
@@ -27,8 +29,100 @@ class AddTrip extends Component
      public $material_name = null;
      public $note = null;
 
+    // Manual entry names
+    public $party_name = null;
+    public $driver_name = null;
+    public $truck_name = null;
+
+    // Manual entry flags
+    public $party_manual_entry = false;
+    public $driver_manual_entry = false;
+    public $truck_manual_entry = false;
+
+    // Autocomplete search
+    public $partySearch = '';
+    public $driverSearch = '';
+    public $truckSearch = '';
+
+    // Preloaded lists
+    public $partyList = [];
+    public $driverList = [];
+    public $truckList = [];
+
+    // UI state
+    public $showPartyDropdown = false;
+    public $showDriverDropdown = false;
+    public $showTruckDropdown = false;
+
     // Loading state for submit button
     public bool $saving = false;
+
+    /**
+     * Load preloaded lists on component mount
+     */
+    public function mount()
+    {
+        $this->partyList = Party::active()
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->toArray();
+
+        $this->driverList = Driver::orderBy('name')
+            ->get(['id', 'name'])
+            ->toArray();
+
+        $this->truckList = Truck::orderBy('truck_number')
+            ->get(['id', 'truck_number as name'])
+            ->toArray();
+    }
+
+    /**
+     * Computed property for filtered party list
+     */
+    #[Computed]
+    public function filteredParties()
+    {
+        if (!$this->partySearch) {
+            return $this->partyList;
+        }
+
+        $search = strtolower($this->partySearch);
+        return array_filter($this->partyList, function ($party) use ($search) {
+            return strpos(strtolower($party['name']), $search) !== false;
+        });
+    }
+
+    /**
+     * Computed property for filtered driver list
+     */
+    #[Computed]
+    public function filteredDrivers()
+    {
+        if (!$this->driverSearch) {
+            return $this->driverList;
+        }
+
+        $search = strtolower($this->driverSearch);
+        return array_filter($this->driverList, function ($driver) use ($search) {
+            return strpos(strtolower($driver['name']), $search) !== false;
+        });
+    }
+
+    /**
+     * Computed property for filtered truck list
+     */
+    #[Computed]
+    public function filteredTrucks()
+    {
+        if (!$this->truckSearch) {
+            return $this->truckList;
+        }
+
+        $search = strtolower($this->truckSearch);
+        return array_filter($this->truckList, function ($truck) use ($search) {
+            return strpos(strtolower($truck['name']), $search) !== false;
+        });
+    }
 
     /**
      * Centralized validation rules for creating a trip.
@@ -37,16 +131,23 @@ class AddTrip extends Component
     protected function rules()
     {
         $rules = [
-            'party_id' => 'required|exists:parties,id', // Party required and must exist
-            'truck_id' => 'required|exists:trucks,id', // Truck required and must exist
-            'origin' => 'required|string|max:255', // Origin required
-            'destination' => 'required|string|max:255', // Destination required
-            'billing_type' => 'required|in:' . implode(',', array_keys(config('trip.billing_types'))), // Billing type must be valid
-            'start_date' => 'required|date|before_or_equal:today', // Start date required and not future
-            'start_km' => 'required|integer|min:0', // Start KM required and positive
-            'lr_number' => 'nullable|string|max:255', // LR Number optional
-            'material_name' => 'nullable|string|max:255', // Material Name optional
-            'note' => 'nullable|string', // Note optional
+            // Either party_id OR party_name required
+            'party_id' => 'nullable|exists:parties,id',
+            'party_name' => 'nullable|string|max:255',
+            // Either truck_id OR truck_name required
+            'truck_id' => 'nullable|exists:trucks,id',
+            'truck_name' => 'nullable|string|max:255',
+            // Either driver_id OR driver_name required
+            'driver_id' => 'nullable|exists:drivers,id',
+            'driver_name' => 'nullable|string|max:255',
+            'origin' => 'required|string|max:255',
+            'destination' => 'required|string|max:255',
+            'billing_type' => 'required|in:' . implode(',', array_keys(config('trip.billing_types'))),
+            'start_date' => 'required|date',
+            'start_km' => 'required|integer|min:0',
+            'lr_number' => 'nullable|string|max:255',
+            'material_name' => 'nullable|string|max:255',
+            'note' => 'nullable|string',
         ];
 
         if ($this->billing_type === 'fixed') {
@@ -73,6 +174,8 @@ class AddTrip extends Component
             'destination.required' => 'Destination is required.',
             'billing_type.required' => 'Billing type is required.',
             'billing_type.in' => 'Invalid billing type selected.',
+            'driver_id.required' => 'Driver is required.',
+            'driver_id.exists' => 'Selected driver does not exist.',
             'freight_amount.required' => 'Freight amount is required.',
             'freight_amount.numeric' => 'Freight amount must be a number.',
             'freight_amount.min' => 'Freight amount must be positive.',
@@ -83,7 +186,6 @@ class AddTrip extends Component
             'unit.numeric' => 'Unit must be a number.',
             'unit.min' => 'Unit must be positive.',
             'start_date.required' => 'Start date is required.',
-            'start_date.before_or_equal' => 'Start date cannot be in the future.',
             'start_km.required' => 'Start KM reading is required.',
             'start_km.integer' => 'Start KM must be a whole number.',
             'start_km.min' => 'Start KM must be positive.',
@@ -100,10 +202,60 @@ class AddTrip extends Component
      */
     public function save()
     {
-        $this->saving = true; // Disable button
+        $this->saving = true;
+
+        // Validate required: either id or name for each field
+        if (!$this->party_id && !$this->party_name) {
+            $this->addError('party_id', 'Party is required.');
+            $this->saving = false;
+            return;
+        }
+        if (!$this->driver_id && !$this->driver_name) {
+            $this->addError('driver_id', 'Driver is required.');
+            $this->saving = false;
+            return;
+        }
+        if (!$this->truck_id && !$this->truck_name) {
+            $this->addError('truck_id', 'Truck is required.');
+            $this->saving = false;
+            return;
+        }
 
         // Validate input
         $validated = $this->validate();
+
+        // Handle Party: id prioritized over name
+        if ($this->party_id) {
+            $validated['party_id'] = $this->party_id;
+            $validated['party_name'] = null;
+            $validated['party_manual_entry'] = false;
+        } else {
+            $validated['party_id'] = null;
+            $validated['party_name'] = $this->party_name;
+            $validated['party_manual_entry'] = true;
+        }
+
+        // Handle Driver
+        if ($this->driver_id) {
+            $validated['driver_id'] = $this->driver_id;
+            $validated['driver_name'] = null;
+            $validated['driver_manual_entry'] = false;
+        } else {
+            $validated['driver_id'] = null;
+            $validated['driver_name'] = $this->driver_name;
+            $validated['driver_manual_entry'] = true;
+        }
+
+        // Handle Truck
+        if ($this->truck_id) {
+            $validated['truck_id'] = $this->truck_id;
+            $validated['truck_name'] = null;
+            $validated['truck_manual_entry'] = false;
+        } else {
+            $validated['truck_id'] = null;
+            $validated['truck_name'] = $this->truck_name;
+            $validated['truck_manual_entry'] = true;
+        }
 
         // Calculate freight_amount if not fixed
         if ($this->billing_type !== 'fixed') {
@@ -115,13 +267,12 @@ class AddTrip extends Component
 
         try {
             // Create trip using validated data
+            $validated['status'] = 'start';
             $validated['created_by'] = auth()->id();
-            $driver_id = Truck::find($this->truck_id)->driver_id;
-            $validated['driver_id'] = $driver_id;
             Trip::create($validated);
 
             // Reset form
-            $this->reset(['party_id', 'truck_id', 'origin', 'destination', 'billing_type', 'per_unit_amount', 'unit', 'freight_amount', 'start_date', 'start_km', 'end_date', 'end_km', 'lr_number', 'material_name', 'note']);
+            $this->reset();
 
             // Emit event to refresh list if needed
             $this->dispatch('tripAdded');
@@ -154,56 +305,108 @@ class AddTrip extends Component
         return config('trip.billing_types');
     }
 
-    // Get available parties
-    public function getPartiesProperty()
-    {
-        return Party::active()->orderBy('name')->get();
-    }
 
-    // Get available trucks
-    public function getTrucksProperty()
-    {
-        return Truck::active()->orderBy('truck_number')->get();
-    }
-
-    // Get available drivers
-    public function getDriversProperty()
-    {
-        return Driver::active()->orderBy('name')->get();
-    }
-
-    // Update freight amount when unit changes
-    public function updatedUnit()
-    {
-        $this->calculateFreight();
-    }
 
     public function updatedBillingType()
     {
         // Reset related fields when billing type changes
-        $this->per_unit_amount = null;
-        $this->unit = null;
-        $this->freight_amount = null;
+        $this->per_unit_amount = '';
+        $this->unit = '';
+        $this->freight_amount = 0;
         $this->resetErrorBag(['per_unit_amount', 'unit', 'freight_amount']);
     }
 
-    public function calculateFreight()
+    /**
+     * Handle party search input changes - supports manual entry
+     */
+    public function updatedPartySearch($value)
     {
-        if ($this->billing_type !== 'fixed' && $this->per_unit_amount && $this->unit && is_numeric($this->per_unit_amount) && is_numeric($this->unit) && $this->per_unit_amount > 0 && $this->unit > 0) {
-            $this->freight_amount = $this->per_unit_amount * $this->unit;
-        } else {
-            $this->freight_amount = null;
+        if (empty($value)) {
+            // Search cleared - reset both id and name
+            $this->party_id = null;
+            $this->party_name = null;
+            return;
         }
+
+        // Check if the search matches the currently selected party
+        if ($this->party_id) {
+            $selectedParty = collect($this->partyList)->firstWhere('id', $this->party_id);
+            if ($selectedParty && strtolower($selectedParty['name']) === strtolower($value)) {
+                // Search matches selected party - keep the id, clear manual name
+                $this->party_name = null;
+                return;
+            }
+        }
+
+        // Search doesn't match selected party - treat as manual entry
+        $this->party_id = null;
+        $this->party_name = $value;
     }
+
+    /**
+     * Handle truck search input changes - supports manual entry
+     */
+    public function updatedTruckSearch($value)
+    {
+        if (empty($value)) {
+            // Search cleared - reset both id and name
+            $this->truck_id = null;
+            $this->truck_name = null;
+            return;
+        }
+
+        // Check if the search matches the currently selected truck
+        if ($this->truck_id) {
+            $selectedTruck = collect($this->truckList)->firstWhere('id', $this->truck_id);
+            if ($selectedTruck && strtolower($selectedTruck['name']) === strtolower($value)) {
+                // Search matches selected truck - keep the id, clear manual name
+                $this->truck_name = null;
+                return;
+            }
+        }
+
+        // Search doesn't match selected truck - treat as manual entry
+        $this->truck_id = null;
+        $this->truck_name = $value;
+    }
+
+    /**
+     * Handle driver search input changes - supports manual entry
+     */
+    public function updatedDriverSearch($value)
+    {
+        if (empty($value)) {
+            // Search cleared - reset both id and name
+            $this->driver_id = null;
+            $this->driver_name = null;
+            return;
+        }
+
+        // Check if the search matches the currently selected driver
+        if ($this->driver_id) {
+            $selectedDriver = collect($this->driverList)->firstWhere('id', $this->driver_id);
+            if ($selectedDriver && strtolower($selectedDriver['name']) === strtolower($value)) {
+                // Search matches selected driver - keep the id, clear manual name
+                $this->driver_name = null;
+                return;
+            }
+        }
+
+        // Search doesn't match selected driver - treat as manual entry
+        $this->driver_id = null;
+        $this->driver_name = $value;
+    }
+
+
 
     public function render()
     {
         return view('livewire.admin.trip.add-trip', [
             'statuses' => $this->statuses,
             'billingTypes' => $this->billingTypes,
-            'parties' => $this->parties,
-            'trucks' => $this->trucks,
-            'drivers' => $this->drivers,
+            'filteredParties' => $this->filteredParties,
+            'filteredTrucks' => $this->filteredTrucks,
+            'filteredDrivers' => $this->filteredDrivers,
         ]);
     }
 }

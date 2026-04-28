@@ -33,6 +33,10 @@ class ListTrips extends Component
     public $showDeleteConfirm = false;
     public $deleteTripId = null;
 
+    // Date filter properties
+    public $from_date = null;
+    public $to_date = null;
+
     // Refresh trigger for forcing re-render after updates
     public $refreshTrigger = 0;
 
@@ -56,6 +60,23 @@ class ListTrips extends Component
 
     public function updatingBillingTypeFilter()
     {
+        $this->resetPage();
+    }
+
+    public function updatingFromDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingToDate()
+    {
+        $this->resetPage();
+    }
+
+    // Reset all filters
+    public function resetFilters()
+    {
+        $this->reset(['search', 'statusFilter', 'billingTypeFilter', 'from_date', 'to_date']);
         $this->resetPage();
     }
 
@@ -138,12 +159,24 @@ class ListTrips extends Component
     // Computed property for trips query - dynamic and efficient
     public function getTripsProperty()
     {
-        return Trip::query()
+        $query = Trip::query()
             ->with(['party', 'truck']) // Eager load party and truck
             ->search($this->search) // Use scope for search
             ->status($this->statusFilter) // Use scope for status filter
-            ->billingType($this->billingTypeFilter) // Use scope for billing type filter
-            ->orderBy($this->sortColumn, $this->sortDirection) // Dynamic sorting
+            ->billingType($this->billingTypeFilter); // Use scope for billing type filter
+
+        if ($this->from_date && $this->to_date) {
+            // Fix: include full to_date by using endOfDay()
+            // Prevents exclusion of records on selected end date
+            $query->whereBetween('start_date', [
+                \Carbon\Carbon::parse($this->from_date)->startOfDay(),
+                \Carbon\Carbon::parse($this->to_date)->endOfDay(),
+            ]);
+        } else if ($this->from_date && !$this->to_date) {
+            $query->whereDate('start_date', $this->from_date);
+        }
+
+        return $query->orderBy($this->sortColumn, $this->sortDirection) // Dynamic sorting
             ->paginate(10); // Server-side pagination
     }
 

@@ -15,6 +15,7 @@ class Party extends Model
         'name',
         'email',
         'mobile',
+        'address',
         'status',
         'opening_balance',
         'opening_balance_date',

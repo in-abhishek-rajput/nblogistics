@@ -8,12 +8,12 @@
     @endif
 
     {{-- Search and Filter Section --}}
-    <div class="row mb-3">
-        <div class="col-md-6">
+    <div class="row g-2 mb-3">
+        <div class="col-12 col-md">
             <input type="text" wire:model.live.debounce.300ms="search" class="form-control"
                 placeholder="Search by name or mobile..." />
         </div>
-        <div class="col-md-4">
+        <div class="col-12 col-md">
             <select wire:model.live="statusFilter" class="form-select">
                 <option value="">All Statuses</option>
                 @foreach ($statuses as $key => $status)
@@ -21,7 +21,12 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-12 col-md-auto">
+            <button type="button" wire:click="resetFilters" class="btn btn-secondary w-100" title="Reset Filters">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </button>
+        </div>
+        <div class="col-12 col-md-auto">
             <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal"
                 data-bs-target="#addDriverModal">
                 <i class="bi bi-plus"></i> Add Driver
