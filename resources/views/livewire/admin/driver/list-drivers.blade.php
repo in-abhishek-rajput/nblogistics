@@ -9,10 +9,12 @@
 
     {{-- Search and Filter Section --}}
     <div class="row g-2 mb-3">
-        <div class="col-12 col-md">
+        <div class="col-6 col-md-6">
             <input type="text" wire:model.live.debounce.300ms="search" class="form-control"
                 placeholder="Search by name or mobile..." />
         </div>
+    </div>
+    <div class="row g-2 mb-3">
         <div class="col-12 col-md">
             <select wire:model.live="statusFilter" class="form-select">
                 <option value="">All Statuses</option>
@@ -25,6 +27,16 @@
             <button type="button" wire:click="resetFilters" class="btn btn-secondary w-100" title="Reset Filters">
                 <i class="bi bi-arrow-counterclockwise"></i> Reset
             </button>
+        </div>
+        <div class="col-12 col-md-auto">
+            <a href="{{ route('drivers.salary') }}" class="btn btn-warning w-100 text-dark">
+                <i class="bi bi-cash-stack"></i> Salaries
+            </a>
+        </div>
+        <div class="col-12 col-md-auto">
+            <a href="{{ route('drivers.attendance') }}" class="btn btn-info w-100 text-white">
+                <i class="bi bi-calendar-check"></i> Attendance
+            </a>
         </div>
         <div class="col-12 col-md-auto">
             <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal"

@@ -11,6 +11,7 @@ class AddDriver extends Component
     public string $name = '';
     public string $mobile = '';
     public float $opening_balance = 0;
+    public float $base_salary = 0;
 
     // Loading state for submit button
     public bool $saving = false;
@@ -31,6 +32,7 @@ class AddDriver extends Component
             'name' => 'required|string|max:255', // Name is required for identification
             'mobile' => 'required|numeric|digits:10|unique:drivers,mobile', // Mobile, max length for international numbers
             'opening_balance' => 'required|numeric|min:0|max:99999999.99', // Balance must be non-negative decimal
+            'base_salary' => 'required|numeric|min:0|max:99999999.99', // Base salary must be non-negative decimal
         ];
     }
 
@@ -44,6 +46,8 @@ class AddDriver extends Component
             'mobile.unique' => 'This mobile is already registered.',
             'opening_balance.numeric' => 'Opening balance must be a number.',
             'opening_balance.min' => 'Opening balance cannot be negative.',
+            'base_salary.numeric' => 'Base salary must be a number.',
+            'base_salary.min' => 'Base salary cannot be negative.',
         ];
     }
 
@@ -62,7 +66,7 @@ class AddDriver extends Component
             Driver::create($validated);
 
             // Reset form
-            $this->reset(['name', 'mobile', 'opening_balance']);
+            $this->reset(['name', 'mobile', 'opening_balance', 'base_salary']);
             $this->status = config('driver.default_status');
 
             // Emit event to refresh list if needed

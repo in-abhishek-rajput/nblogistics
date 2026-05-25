@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Trip;
 
 use App\Models\Trip;
 use App\Models\TripExpense;
+use App\Models\Truck;
 use Livewire\Component;
 
 class EditExpense extends Component
@@ -11,7 +12,9 @@ class EditExpense extends Component
     public int $expenseId; // Expense ID to edit
 
     // Form properties - same as AddExpense
-    public int $trip_id = 0;
+    public string $expense_category = 'trip';
+    public ?int $trip_id = null;
+    public ?int $truck_id = null;
     public string $expense_type = '';
     public float $amount = 0;
     public string $expense_date = '';
@@ -22,15 +25,9 @@ class EditExpense extends Component
     // Loading state for submit button
     public bool $saving = false;
 
-    // Expense type options (dynamic)
-    public array $expenseTypeOptions = [
-        'toll' => 'Toll',
-        'parking' => 'Parking',
-        'loading_unloading' => 'Loading/Unloading',
-        'fuel' => 'Fuel',
-        'maintenance' => 'Maintenance',
-        'others' => 'Others',
-    ];
+    // Expense types mapping from JSON
+    public array $expenseTypesMap = [];
+    public array $expenseTypeOptions = [];
 
     // Payment mode options
     public array $paymentModeOptions = [
@@ -47,13 +44,43 @@ class EditExpense extends Component
         $expense = TripExpense::findOrFail($expenseId);
 
         // Populate form with existing data
+        $this->expense_category = $expense->expense_category;
         $this->trip_id = $expense->trip_id;
+        $this->truck_id = $expense->truck_id;
         $this->expense_type = $expense->expense_type;
         $this->amount = $expense->amount;
         $this->expense_date = $expense->expense_date->format('Y-m-d');
         $this->payment_mode = $expense->payment_mode;
         $this->add_to_party_bill = $expense->add_to_party_bill;
         $this->notes = $expense->notes ?? '';
+
+        // Load expense types from JSON
+        $jsonPath = public_path('js/expense_types.json');
+        if (file_exists($jsonPath)) {
+            $this->expenseTypesMap = json_decode(file_get_contents($jsonPath), true) ?? [];
+        }
+
+        // Set initial options based on loaded category
+        $this->expenseTypeOptions = $this->expenseTypesMap[$this->expense_category] ?? [];
+    }
+
+    public function updatedExpenseCategory($value)
+    {
+        // Auto update expense_type options from JSON mapping when category changes
+        $this->expenseTypeOptions = $this->expenseTypesMap[$value] ?? [];
+        
+        // Fallback: If category not found or changed, reset type
+        $this->expense_type = '';
+        
+        // Reset related IDs
+        if ($value === 'trip') {
+            $this->truck_id = null;
+        } elseif ($value === 'truck') {
+            $this->trip_id = null;
+        } else {
+            $this->trip_id = null;
+            $this->truck_id = null;
+        }
     }
 
     /**
@@ -62,7 +89,9 @@ class EditExpense extends Component
     protected function rules()
     {
         return [
-            'trip_id' => 'required|exists:trips,id',
+            'expense_category' => 'required|in:trip,truck,office',
+            'trip_id' => 'required_if:expense_category,trip|nullable|exists:trips,id',
+            'truck_id' => 'required_if:expense_category,truck|nullable|exists:trucks,id',
             'expense_type' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0.01|max:99999999.99',
             'expense_date' => 'required|date|before_or_equal:today',
@@ -78,8 +107,10 @@ class EditExpense extends Component
     protected function messages()
     {
         return [
-            'trip_id.required' => 'Trip is required.',
+            'trip_id.required_if' => 'Trip is required when expense is for a trip.',
+            'truck_id.required_if' => 'Truck is required when expense is for a truck.',
             'trip_id.exists' => 'Selected trip does not exist.',
+            'truck_id.exists' => 'Selected truck does not exist.',
             'expense_type.required' => 'Expense type is required.',
             'amount.required' => 'Expense amount is required.',
             'amount.min' => 'Amount must be greater than zero.',
@@ -100,6 +131,16 @@ class EditExpense extends Component
         $validated = $this->validate();
 
         try {
+            // Nullify unused IDs
+            if ($validated['expense_category'] === 'trip') {
+                $validated['truck_id'] = null;
+            } elseif ($validated['expense_category'] === 'truck') {
+                $validated['trip_id'] = null;
+            } else {
+                $validated['trip_id'] = null;
+                $validated['truck_id'] = null;
+            }
+
             // Update expense using validated data
             TripExpense::findOrFail($this->expenseId)->update($validated);
 
@@ -126,10 +167,17 @@ class EditExpense extends Component
         return Trip::with(['party', 'truck'])->orderBy('created_at', 'desc')->get();
     }
 
+    // Get available trucks
+    public function getTrucksProperty()
+    {
+        return Truck::orderBy('truck_number', 'asc')->get();
+    }
+
     public function render()
     {
         return view('livewire.admin.trip.edit-expense', [
             'trips' => $this->trips,
+            'trucks' => $this->trucks,
             'expenseTypeOptions' => $this->expenseTypeOptions,
             'paymentModeOptions' => $this->paymentModeOptions,
         ]);

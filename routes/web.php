@@ -1,16 +1,16 @@
 <?php
 
-use App\Http\Controllers\Admin\BiltyController;
+use App\Http\Controllers\admin\BiltyController;
 use App\Http\Controllers\admin\Auth\LoginController;
 use App\Http\Controllers\admin\DashboardController;
-use App\Http\Controllers\Admin\DriversController;
-use App\Http\Controllers\Admin\ExpensesController;
-use App\Http\Controllers\Admin\InvoicesController;
-use App\Http\Controllers\Admin\PartiesController;
-use App\Http\Controllers\Admin\ProfileController;
-use App\Http\Controllers\Admin\ReportsController;
-use App\Http\Controllers\Admin\TripsController;
-use App\Http\Controllers\Admin\TrucksController;
+use App\Http\Controllers\admin\DriversController;
+use App\Http\Controllers\admin\ExpensesController;
+use App\Http\Controllers\admin\InvoicesController;
+use App\Http\Controllers\admin\PartiesController;
+use App\Http\Controllers\admin\ProfileController;
+use App\Http\Controllers\admin\ReportsController;
+use App\Http\Controllers\admin\TripsController;
+use App\Http\Controllers\admin\TrucksController;
 use Illuminate\Support\Facades\Route;
 
 // Authentication Routes (Public - Guest only)
@@ -31,6 +31,12 @@ Route::middleware(['auth'])->group(function () {
     // Resource Routes
     Route::resource('parties', PartiesController::class);
     Route::resource('trips', TripsController::class);
+    Route::get('drivers-attendance', function () {
+        return view('admin.driver.attendance');
+    })->name('drivers.attendance');
+    Route::get('drivers-salary', function () {
+        return view('admin.driver.salary');
+    })->name('drivers.salary');
     Route::resource('drivers', DriversController::class);
     Route::resource('trucks', TrucksController::class);
     Route::resource('expenses', ExpensesController::class);

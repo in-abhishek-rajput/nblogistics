@@ -48,6 +48,7 @@ class Trip extends Model
         'material_name',
         'note',
         'completed_date',
+        'pod_receipt',
         'pod_received_date',
         'pod_submitted_date',
         'settled_date',
@@ -203,20 +204,25 @@ class Trip extends Model
             $originalDriverId = $trip->getOriginal('driver_id');
             $originalTruckId = $trip->getOriginal('truck_id');
 
-            // If trip is active (not completed), mark driver and truck as busy
-            if ($trip->status !== 'completed') {
-                if ($trip->driver_id) {
+            $completedStatuses = ['completed', 'pod_received', 'pod_submitted', 'settled'];
+            
+            // Trip is considered finished if it's in a completed phase OR fully paid
+            $isFinished = in_array($trip->status, $completedStatuses) || $trip->pending_freight_amount <= 0;
+
+            // If trip is active, mark driver and truck as busy
+            if (!$isFinished) {
+                if ($trip->driver_id && !$trip->driver_manual_entry) {
                     $trip->driver()->update(['status' => $busyStatus]);
                 }
-                if ($trip->truck_id) {
+                if ($trip->truck_id && !$trip->truck_manual_entry) {
                     $trip->truck()->update(['status' => $busyStatus]);
                 }
             } else {
-                // If trip is completed, mark driver and truck as available
-                if ($trip->driver_id) {
+                // If trip is finished, mark driver and truck as available
+                if ($trip->driver_id && !$trip->driver_manual_entry) {
                     $trip->driver()->update(['status' => $availableStatus]);
                 }
-                if ($trip->truck_id) {
+                if ($trip->truck_id && !$trip->truck_manual_entry) {
                     $trip->truck()->update(['status' => $availableStatus]);
                 }
             }

@@ -75,4 +75,16 @@ return [
     |
     */
     'default_status' => 'pending',
+
+    'date_filters' => [
+        'today' => 'Today',
+        'this_week' => 'This Week',
+        'last_week' => 'Last Week',
+        'this_month' => 'This Month',
+        'last_month' => 'Last Month',
+        'last_3_months' => 'Last 3 Months',
+        'this_year' => 'This Year',
+        'all_months' => 'All Months',
+        'custom' => 'Custom',
+    ],
 ];

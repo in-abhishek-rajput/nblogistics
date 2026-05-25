@@ -17,37 +17,44 @@
     </div>
 
     {{-- Search and Filter Section --}}
-    <div class="row g-2 mb-3">
-        <div class="col-12 col-md">
-            <input type="text" wire:model.live.debounce.300ms="search" class="form-control"
-                placeholder="Search by party, truck, or route..." />
+    <div class="row g-3 mb-4 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label d-none d-md-block">&nbsp;</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" wire:model.live.debounce.300ms="search" class="form-control border-start-0 ps-0"
+                    placeholder="Search Trips" />
+            </div>
         </div>
-        <div class="col-12 col-md">
-            <select wire:model.live="statusFilter" class="form-select">
-                <option value="">All Statuses</option>
-                @foreach ($statuses as $key => $status)
-                    <option value="{{ $key }}">{{ $status['label'] }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-12 col-md">
-            <select wire:model.live="billingTypeFilter" class="form-select">
-                <option value="">All Billing Types</option>
-                @foreach ($billingTypes as $key => $type)
-                    <option value="{{ $key }}">{{ $type }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-12 col-md">
-            <input type="date" wire:model.lazy="from_date" class="form-control" title="From Date" aria-label="From Date">
-        </div>
-        <div class="col-12 col-md">
-            <input type="date" wire:model.lazy="to_date" class="form-control" title="To Date" aria-label="To Date">
-        </div>
-        <div class="col-12 col-md-auto">
-            <button type="button" wire:click="resetFilters" class="btn btn-secondary w-100" title="Reset Filters">
-                <i class="bi bi-arrow-counterclockwise"></i> Reset
-            </button>
+
+        <div class="col-md-auto ms-auto">
+            <div class="row g-2">
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small text-muted mb-1">Date</label>
+                    <select wire:model.live="selectedDateFilter" class="form-select">
+                        @foreach ($dateFilters as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small text-muted mb-1">Trip Status</label>
+                    <select wire:model.live="statusFilter" class="form-select">
+                        <option value="">All Statuses</option>
+                        @foreach ($statuses as $key => $status)
+                            <option value="{{ $key }}">{{ $status['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <label class="form-label d-none d-md-block mt-1">&nbsp;</label>
+                    <button type="button" wire:click="resetFilters" class="btn btn-outline-secondary w-100" title="Reset Filters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -112,12 +119,14 @@
                         <td class="border">{{ $trip->trip_date_formatted ?? '-' }}</td>
                         <td class="border">{{ $billingTypes[$trip->billing_type] ?? ucfirst(str_replace('_', ' ', $trip->billing_type)) }}</td>
                         {{-- Merged freight + pending amount --}}
-                        <td class="border">
+                        <td class="border {{ $trip->pending_freight_amount <= 0 ? 'text-success fw-bold' : '' }}">
                             <i class="fas fa-rupee-sign"></i> {{ number_format($trip->freight_amount, 2) }}
-                            <br>
-                            <small class="text-danger">
-                                Pending: <i class="fas fa-rupee-sign"></i> {{ number_format($trip->pending_freight_amount, 2) }}
-                            </small>
+                            @if($trip->pending_freight_amount > 0)
+                                <br>
+                                <small class="text-danger">
+                                    Pending: <i class="fas fa-rupee-sign"></i> {{ number_format($trip->pending_freight_amount, 2) }}
+                                </small>
+                            @endif
                         </td>
                         <td class="border">
                             <span class="badge bg-{{ $statuses[$trip->status]['color'] ?? 'secondary' }}">
@@ -234,6 +243,38 @@
     </div>
     @endif
 
+    {{-- Custom Date Filter Modal --}}
+    <div class="modal fade" id="customDateModal" tabindex="-1" aria-labelledby="customDateModalLabel" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="customDateModalLabel">Custom Date Filter</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold">Start Date*</label>
+                        <div class="input-group">
+                            <input type="date" wire:model="from_date" class="form-control" placeholder="Select Start Date">
+                            <span class="input-group-text bg-white"><i class="bi bi-calendar3"></i></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold">End Date*</label>
+                        <div class="input-group">
+                            <input type="date" wire:model="to_date" class="form-control" placeholder="Select End Date">
+                            <span class="input-group-text bg-white"><i class="bi bi-calendar3"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 justify-content-center">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Scripts for offcanvas --}}
     @script
         <script>
@@ -247,6 +288,11 @@
                 offcanvas.show();
             });
 
+            Livewire.on('showCustomDateModal', () => {
+                const modal = new bootstrap.Modal(document.getElementById('customDateModal'));
+                modal.show();
+            });
+
             Livewire.on('closeOffcanvas', (offcanvasId) => {
                 const offcanvasElement = document.getElementById(offcanvasId);
                 const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
@@ -258,6 +304,9 @@
             // For trip view modals
             Livewire.on('show-confirm-modal', () => {
                 $('#confirmModal').modal('show');
+            });
+            Livewire.on('show-pod-modal', () => {
+                $('#podModal').modal('show');
             });
             Livewire.on('show-complete-modal', () => {
                 $('#completeModal').modal('show');

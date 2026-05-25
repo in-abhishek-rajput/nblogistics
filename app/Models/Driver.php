@@ -17,6 +17,7 @@ class Driver extends Model
         'mobile',
         'status',
         'opening_balance',
+        'base_salary',
     ];
 
     /**
@@ -59,6 +60,14 @@ class Driver extends Model
     public function truck()
     {
         return $this->hasOne(Truck::class,'driver_id');
+    }
+
+    /**
+     * Get the attendances for the driver.
+     */
+    public function attendances()
+    {
+        return $this->hasMany(DriverAttendance::class);
     }
 }
 
