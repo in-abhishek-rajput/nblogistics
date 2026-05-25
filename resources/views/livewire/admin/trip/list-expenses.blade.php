@@ -9,11 +9,51 @@
         </div>
     @endif
 
+    {{-- Header & Add Button --}}
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <div class="d-flex align-items-center mb-3">
+                <h5 class="mb-0 text-primary fw-bold me-2">
+                    {{ $expenseMonth ? \Carbon\Carbon::parse($expenseMonth)->format('F Y') : 'Select Month' }}
+                </h3>
+                <div class="position-relative" style="display: inline-block;">
+                    <div class="border rounded px-2 py-1 bg-white d-flex align-items-center justify-content-center" style="border-color: #ccc !important;">
+                        <i class="bi bi-chevron-down text-primary" style="font-size: 14px; color: #0033cc !important;"></i>
+                    </div>
+                    <input type="month" wire:model.live="expenseMonth" class="position-absolute top-0 start-0 w-100 h-100" style="opacity: 0; cursor: pointer;">
+                </div>
+            </div>
+
+            <div class="border rounded p-3 bg-white" style="display: inline-block; min-width: 250px;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center me-4">
+                        <span class="text-secondary fw-bold me-1" style="font-size: 12px;">TOTAL MONTH EXPENSE</span>
+                        <i class="bi bi-info-circle text-secondary" style="font-size: 12px;" title="Total expenses for the selected month"></i>
+                    </div>
+                    <div class="text-danger fw-bold fs-4 mb-0">
+                        <i class="fa fa-rupee-sign"></i> {{ number_format($this->totalMonthExpense, 0) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+            <i class="bi bi-plus"></i> Add Expense
+        </button>
+    </div>
+
     {{-- Search and Filter Section --}}
     <div class="row mb-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <input type="text" wire:model.live.debounce.300ms="search" class="form-control"
-                placeholder="Search by expense type, notes, party, or route..." />
+                placeholder="Search by notes, party..." />
+        </div>
+        <div class="col-md-2">
+            <select wire:model.live="expenseCategoryFilter" class="form-select">
+                <option value="">All Categories</option>
+                <option value="trip">Trip</option>
+                <option value="truck">Truck</option>
+                <option value="office">Office</option>
+            </select>
         </div>
         <div class="col-md-3">
             <select wire:model.live="paymentModeFilter" class="form-select">
@@ -23,13 +63,13 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <input type="date" wire:model.live="dateFilter" class="form-control"
                 placeholder="Filter by date" />
         </div>
         <div class="col-md-2">
-            <button type="button" class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
-                <i class="bi bi-plus"></i> Add Expense
+            <button type="button" wire:click="resetFilters" class="btn btn-secondary w-100">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
             </button>
         </div>
     </div>
@@ -37,12 +77,12 @@
     {{-- Expenses Table --}}
     <div class="table-responsive">
         <table class="table table-borderless border">
-            <thead class="bg-light">
+            <thead class="bg-light-blue">
                 <tr>
                     <th scope="col">
-                        <a href="#" wire:click.prevent="sortBy('trip.party.name')" class="text-decoration-none">
-                            Trip Reference
-                            @if ($sortColumn === 'trip.party.name')
+                        <a href="#" wire:click.prevent="sortBy('expense_category')" class="text-decoration-none">
+                            Expense For
+                            @if ($sortColumn === 'expense_category')
                                 <i class="bi bi-chevron-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
                             @endif
                         </a>
@@ -86,26 +126,38 @@
             <tbody>
                 @forelse($expenses as $expense)
                     <tr>
-                        <td>
-                            <div>
-                                <strong>{{ $expense->trip->party->name ?? 'N/A' }}</strong><br>
-                                <small class="text-muted">{{ $expense->trip->origin ?? 'N/A' }} → {{ $expense->trip->destination ?? 'N/A' }}</small>
-                            </div>
+                        <td class="border">
+                            @if($expense->expense_category === 'trip' && $expense->trip)
+                                <div>
+                                    <span class="badge bg-primary">Trip</span><br>
+                                    <strong>{{ $expense->trip->party->name ?? 'N/A' }}</strong><br>
+                                    <small class="text-muted">{{ $expense->trip->origin ?? 'N/A' }} → {{ $expense->trip->destination ?? 'N/A' }}</small>
+                                </div>
+                            @elseif($expense->expense_category === 'truck' && $expense->truck)
+                                <div>
+                                    <span class="badge bg-info">Truck</span><br>
+                                    <strong>{{ $expense->truck->truck_number }}</strong>
+                                </div>
+                            @else
+                                <div>
+                                    <span class="badge bg-secondary">Office</span>
+                                </div>
+                            @endif
                         </td>
-                        <td>{{ ucfirst($expense->expense_type) }}</td>
-                        <td>
+                        <td class="border">{{ ucfirst($expense->expense_type) }}</td>
+                        <td class="border">
                             <i class="fa fa-rupee-sign"></i> {{ number_format($expense->amount, 2) }}
                         </td>
-                        <td>{{ $paymentModes[$expense->payment_mode] ?? ucfirst($expense->payment_mode) }}</td>
-                        <td>{{ $expense->expense_date->format('d M Y') }}</td>
-                        <td>
+                        <td class="border">{{ $paymentModes[$expense->payment_mode] ?? ucfirst($expense->payment_mode) }}</td>
+                        <td class="border">{{ $expense->expense_date->format('d M Y') }}</td>
+                        <td class="border">
                             @if($expense->add_to_party_bill)
                                 <span class="badge bg-success">Yes</span>
                             @else
                                 <span class="badge bg-secondary">No</span>
                             @endif
                         </td>
-                        <td>
+                        <td class="border">
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                     data-bs-toggle="dropdown" aria-expanded="false">
@@ -206,4 +258,27 @@
             </div>
         </div>
     </div>
+
+    {{-- Scripts for modals --}}
+    @script
+        <script>
+            Livewire.on('showEditModal', () => {
+                const modal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
+                modal.show();
+            });
+
+            Livewire.on('closeModal', (modalId) => {
+                const modalElement = document.getElementById(modalId);
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    // Blur any focused elements inside the modal to avoid aria-hidden focus issues
+                    const focusedElement = modalElement.querySelector(':focus');
+                    if (focusedElement) {
+                        focusedElement.blur();
+                    }
+                    modal.hide();
+                }
+            });
+        </script>
+    @endscript
 </div>

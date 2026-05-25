@@ -14,6 +14,8 @@ class ListExpenses extends Component
     public string $search = ''; // Search term for expense type, notes
     public string $paymentModeFilter = ''; // Payment mode filter
     public string $dateFilter = ''; // Date filter
+    public string $expenseCategoryFilter = ''; // Category filter
+    public string $expenseMonth = ''; // Month filter
 
     // Sorting properties
     public string $sortColumn = 'created_at'; // Default sort column
@@ -32,6 +34,11 @@ class ListExpenses extends Component
 
     // Refresh trigger for forcing re-render after updates
     public $refreshTrigger = 0;
+
+    public function mount()
+    {
+        $this->expenseMonth = now()->format('Y-m');
+    }
 
     // Listeners for refreshing table after add/edit
     protected $listeners = [
@@ -56,6 +63,23 @@ class ListExpenses extends Component
         $this->resetPage();
     }
 
+    public function updatingExpenseCategoryFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingExpenseMonth()
+    {
+        $this->resetPage();
+    }
+
+    public function resetFilters()
+    {
+        $this->reset(['search', 'paymentModeFilter', 'dateFilter', 'expenseCategoryFilter']);
+        $this->expenseMonth = now()->format('Y-m');
+        $this->resetPage();
+    }
+
     // Set expense for editing
     public function editExpense($id)
     {
@@ -68,7 +92,13 @@ class ListExpenses extends Component
      */
     public function getExpensesQuery()
     {
-        $query = TripExpense::with(['trip.party', 'trip.truck']);
+        $query = TripExpense::with(['trip.party', 'trip.truck', 'truck']);
+
+        // Month filter
+        if ($this->expenseMonth) {
+            $query->whereYear('expense_date', substr($this->expenseMonth, 0, 4))
+                  ->whereMonth('expense_date', substr($this->expenseMonth, 5, 2));
+        }
 
         // Search filter
         if ($this->search) {
@@ -95,10 +125,42 @@ class ListExpenses extends Component
             $query->whereDate('expense_date', $this->dateFilter);
         }
 
+        // Category filter
+        if ($this->expenseCategoryFilter) {
+            $query->where('expense_category', $this->expenseCategoryFilter);
+        }
+
         // Sorting
         $query->orderBy($this->sortColumn, $this->sortDirection);
 
         return $query;
+    }
+
+    /**
+     * Get total expense for the selected month
+     */
+    public function getTotalMonthExpenseProperty()
+    {
+        if (!$this->expenseMonth) {
+            return 0;
+        }
+
+        $query = TripExpense::query();
+
+        // Month filter
+        $query->whereYear('expense_date', substr($this->expenseMonth, 0, 4))
+              ->whereMonth('expense_date', substr($this->expenseMonth, 5, 2));
+
+        // Apply filters
+        if ($this->paymentModeFilter) {
+            $query->where('payment_mode', $this->paymentModeFilter);
+        }
+        
+        if ($this->expenseCategoryFilter) {
+            $query->where('expense_category', $this->expenseCategoryFilter);
+        }
+
+        return $query->sum('amount');
     }
 
     /**

@@ -10,8 +10,9 @@ class AddParty extends Component
     // Form properties - public for Livewire binding
     public string $name = '';
     public string $mobile = '';
-    public float $opening_balance = 0;
-    public string $opening_balance_date = '';
+    public ?string $address = null;
+    public ?float $opening_balance = null;
+    public ?string $opening_balance_date = null;
     public string $status = '';
 
     // Loading state for submit button
@@ -32,9 +33,10 @@ class AddParty extends Component
         return [
             'name' => 'required|string|max:255', // Name is required for identification
             'mobile' => 'required|numeric|digits:10|unique:parties,mobile', // Mobile, max length for international numbers
-            'opening_balance' => 'required|numeric|min:0|max:99999999.99', // Balance must be non-negative decimal
+            'opening_balance' => 'nullable|numeric|min:0|max:99999999.99', // Balance is optional, non-negative decimal if provided
             'opening_balance_date' => 'nullable|date', // Date for opening balance
             'status' => 'required|string|in:active,inactive', // Status validation
+            'address' => 'nullable|string|max:255',
         ];
     }
 

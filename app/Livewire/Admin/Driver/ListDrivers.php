@@ -43,6 +43,13 @@ class ListDrivers extends Component
         $this->resetPage();
     }
 
+    // Reset all filters
+    public function resetFilters()
+    {
+        $this->reset(['search', 'statusFilter']);
+        $this->resetPage();
+    }
+
     // Sort method to toggle direction or change column
     public function sortBy($column)
     {

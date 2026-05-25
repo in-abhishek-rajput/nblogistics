@@ -42,7 +42,7 @@
                     <div class="d-row-set">
                         <i class="fa fa-truck text-dark fs-3"></i>
                         <div class="mob-font">
-                            <h6 class="mb-0">{{ $trip->truck->truck_number ?? 'N/A' }}</h6>
+                            <h6 class="mb-0">{{ $trip->truck->truck_number ?? $trip->truck_name }}</h6>
                             <a href="#" class="fs-14 mob-font">
                                 View Trucks <i class="bi bi-chevron-double-right"></i>
                             </a>
@@ -59,7 +59,7 @@
                             <img src="{{ asset('img/steering-wheel.png') }}" width="40" alt="Driver" />
                             <div class="mob-font">
                                 <span>Driver Name</span>
-                                <h6 class="mb-0">{{ $trip->driver->name ?? 'N/A' }}</h6>
+                                <h6 class="mb-0">{{ $trip->driver->name ?? $trip->driver_name }}</h6>
                             </div>
                         </div>
                         <a href="#" class="fs-14"><i class="bi bi-chevron-right"></i></a>
@@ -110,7 +110,7 @@
                                 <div class="border rounded-2 p-2 d-space-b mb-2">
                                     <div>
                                         <span class="fs-14">Party Name</span><br>
-                                        <b class="text-primary">{{ $trip->party->name ?? 'N/A' }}</b>
+                                        <b class="text-primary">{{ $trip->party->name ?? $trip->party_name }}</b>
                                     </div>
                                     <div>
                                         <span class="fs-14">Party Balance</span><br>
@@ -285,14 +285,14 @@
                         @elseif ($canShowPodReceived)
                             <div class="col-md-6 col-6">
                                 <button
-                                    wire:click="confirmStatusChange('pod_received')"
+                                    wire:click="openPodModal"
                                     wire:loading.attr="disabled"
-                                    wire:target="confirmStatusChange('pod_received')"
+                                    wire:target="openPodModal"
                                     class="btn btn-outline-success w-100">
-                                    <span wire:loading.remove wire:target="confirmStatusChange('pod_received')">
+                                    <span wire:loading.remove wire:target="openPodModal">
                                         <i class="bi bi-file-earmark-check me-1"></i> POD Received
                                     </span>
-                                    <span wire:loading wire:target="confirmStatusChange('pod_received')">
+                                    <span wire:loading wire:target="openPodModal">
                                         <span class="spinner-border spinner-border-sm me-1"></span> Loading...
                                     </span>
                                 </button>
@@ -332,7 +332,7 @@
                         @endif
 
                         <div class="col-md-6 col-6">
-                            <a href="#" class="btn btn-primary w-100">
+                            <a href="{{ route('invoices.show', $trip->id) }}" target="_blank" class="btn btn-primary w-100">
                                 <i class="bi bi-receipt me-1"></i> View Bill
                             </a>
                         </div>
@@ -759,10 +759,22 @@
     ═══════════════════════════════════════════════════════════════ --}}
     <div class="col-md-4">
 
+        <div class="d-flex justify-content-center gap-2 mb-2">
+            <button type="button" class="btn btn-outline-primary px-3 bg-white" wire:click="$parent.editTrip({{ $trip->id }})">
+                <i class="bi bi-pencil-fill me-1"></i> Edit Trip
+            </button>
+            <button type="button" class="btn btn-outline-danger px-3 bg-white" wire:click="$parent.confirmDeleteTrip({{ $trip->id }})">
+                <i class="bi bi-trash-fill me-1"></i> Delete Trip
+            </button>
+        </div>
+
         {{-- ── Trip Profit ── --}}
         <div class="bg-light p-0 shadow-sm mb-2">
             <div class="d-space-b p-3">
-                <h6 class="mb-0">Trip Profit</h6>
+                <h6 class="mb-0 mt-1">Trip Profit</h6>
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 bg-white" wire:click="openExpenseForm">
+                    <i class="bi bi-plus"></i> Add Expense
+                </button>
             </div>
             <hr class="my-0">
             <div class="trip-profit-details bg-light p-3">
@@ -825,7 +837,7 @@
                     <i class="bi bi-list"></i>
                     <b>Online Bilty/LR</b>
                 </div>
-                <a href="#" class="btn btn-sm btn-success">Create LR</a>
+                <a href="{{ route('builty.show', $trip->id) }}" target="_blank" class="btn btn-sm btn-success">Create LR</a>
             </div>
 
             <div class="border rounded-2 p-2 d-space-b">
@@ -849,7 +861,7 @@
          "Yes, Confirm" calls updateStatus() via wire:click.
          "Cancel" calls closeModals() to reset PHP state.
     ═══════════════════════════════════════════════════════════════ --}}
-    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true" wire:ignore.self>
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
 
@@ -866,6 +878,17 @@
                         <strong class="text-primary">"{{ $confirmLabel }}"</strong>?
                     </p>
                     <p class="text-muted fs-14 mt-1 mb-0">This action cannot be undone.</p>
+
+                    @if($confirmAction === 'settled')
+                        <div class="mt-3">
+                            <label for="paid_amount" class="form-label">Paid Amount <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control @error('paid_amount') is-invalid @enderror" id="paid_amount" wire:model="paid_amount" placeholder="Enter amount">
+                            @error('paid_amount')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted d-block mt-1">Pending Amount: <i class="fas fa-rupee-sign fs-14"></i> {{ number_format($trip->pending_freight_amount, 2) }}</small>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="modal-footer border-0 pt-0">
@@ -881,8 +904,7 @@
                         class="btn btn-success"
                         wire:click="updateStatus"
                         wire:loading.attr="disabled"
-                        wire:target="updateStatus"
-                        data-bs-dismiss="modal">
+                        wire:target="updateStatus">
                         <span wire:loading.remove wire:target="updateStatus">
                             <i class="bi bi-check2 me-1"></i> Yes, Confirm
                         </span>
@@ -908,7 +930,7 @@
          Requires: end_date (must be >= start_date)
                    end_km   (must be >= start_km)
     ═══════════════════════════════════════════════════════════════ --}}
-    <div class="modal fade" id="completeModal" tabindex="-1" aria-labelledby="completeModalLabel" aria-hidden="true">
+    <div class="modal fade" id="completeModal" tabindex="-1" aria-labelledby="completeModalLabel" aria-hidden="true" wire:ignore.self>
         <div class="modal-dialog">
             <div class="modal-content">
 
@@ -994,6 +1016,65 @@
         </div>{{-- /modal-dialog --}}
     </div>{{-- /completeModal --}}
 
+    {{-- ═══════════════════════════════════════════════════════════════
+         4c. POD RECEIVED MODAL
+    ═══════════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="podModal" tabindex="-1" aria-labelledby="podModalLabel" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="podModalLabel">
+                        <i class="bi bi-file-earmark-check me-2 text-success"></i>Upload POD Receipt
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="pod_file" class="form-label">
+                            POD Document <span class="text-danger">*</span>
+                        </label>
+                        <input
+                            type="file"
+                            class="form-control @error('pod_file') is-invalid @enderror"
+                            id="pod_file"
+                            wire:model="pod_file"
+                            accept=".pdf,.jpg,.jpeg,.png">
+                        @error('pod_file')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="text-muted d-block mt-1">
+                            Accepted formats: PDF, JPG, JPEG, PNG (Max 5MB).
+                        </small>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-success"
+                        wire:click="savePodModal"
+                        wire:loading.attr="disabled"
+                        wire:target="savePodModal, pod_file">
+                        <span wire:loading.remove wire:target="savePodModal">
+                            <i class="bi bi-upload me-1"></i> Upload POD
+                        </span>
+                        <span wire:loading wire:target="savePodModal">
+                            <span class="spinner-border spinner-border-sm me-1"></span> Uploading...
+                        </span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>{{-- /podModal --}}
 
 </div>{{-- /row --}}
 

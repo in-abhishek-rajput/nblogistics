@@ -9,6 +9,8 @@ use App\Models\TripExpense;
 use App\Models\TripPayment;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Livewire\WithFileUploads;
 
 /**
  * ViewTrip Livewire Component
@@ -31,6 +33,8 @@ use Illuminate\Support\Facades\DB;
  */
 class ViewTrip extends Component
 {
+    use WithFileUploads;
+
     // ─── Trip Identity ────────────────────────────────────────────────────────
     public int $tripId;
     public Trip $trip;
@@ -46,6 +50,9 @@ class ViewTrip extends Component
      */
     public string $confirmLabel = '';
 
+    public string $paid_amount = '';
+
+
     // ─── "Complete Trip" Modal Fields ─────────────────────────────────────────
 
     /** End date — required only for the "Complete" action */
@@ -53,6 +60,10 @@ class ViewTrip extends Component
 
     /** End KM reading — required only for the "Complete" action */
     public string $end_km = '';
+
+    // ─── "POD Received" Modal Fields ──────────────────────────────────────────
+
+    public $pod_file;
 
     // ─── Processing Guard ─────────────────────────────────────────────────────
 
@@ -363,11 +374,22 @@ class ViewTrip extends Component
      */
     public function openCompleteModal(): void
     {
-        $this->end_date = '';
+        $this->end_date = now()->format('Y-m-d');
         $this->end_km = '';
         $this->resetErrorBag();
 
         $this->dispatch('show-complete-modal');
+    }
+
+    /**
+     * Opens the POD Received modal.
+     */
+    public function openPodModal(): void
+    {
+        $this->pod_file = null;
+        $this->resetErrorBag();
+
+        $this->dispatch('show-pod-modal');
     }
 
     /**
@@ -380,6 +402,8 @@ class ViewTrip extends Component
         $this->confirmLabel = '';
         $this->end_date = '';
         $this->end_km = '';
+        $this->pod_file = null;
+        $this->paid_amount = '';
         $this->resetErrorBag();
 
         $this->dispatch('close-modals');
@@ -409,23 +433,57 @@ class ViewTrip extends Component
             return;
         }
 
+        if ($this->confirmAction === 'settled') {
+            $this->validate([
+                'paid_amount' => [
+                    'required',
+                    'numeric',
+                    'gt:0',
+                    'max:' . $this->trip->pending_freight_amount,
+                ],
+            ], [
+                'paid_amount.required' => 'Paid amount is required.',
+                'paid_amount.numeric' => 'Paid amount must be a number.',
+                'paid_amount.gt' => 'Paid amount must be greater than 0.',
+                'paid_amount.max' => 'Paid amount cannot exceed the pending freight amount.',
+            ]);
+        }
+
         $this->updatingStatus = true;
 
         try {
             DB::transaction(function () {
                 $timestampCol = $this->timestampColumns[$this->confirmAction];
 
-                $this->trip->update([
+                $updateData = [
                     'status' => $this->confirmAction,
                     $timestampCol => now(),
                     'updated_by' => auth()->id(),
-                ]);
+                ];
+
+                if ($this->confirmAction === 'settled') {
+                    $newPendingAmount = round((float) $this->trip->pending_freight_amount - (float) $this->paid_amount, 2);
+                    $updateData['pending_freight_amount'] = max(0, $newPendingAmount);
+
+                    if ($newPendingAmount > 0) {
+                        // Partial payment: DO NOT update status to settled
+                        unset($updateData['status']);
+                        unset($updateData[$timestampCol]);
+                    }
+                }
+
+                $this->trip->update($updateData);
             });
 
-            $label = $this->statusLabels[$this->confirmAction];
+            if ($this->confirmAction === 'settled' && round((float) $this->trip->pending_freight_amount - (float) $this->paid_amount, 2) > 0) {
+                session()->flash('success', "Partial payment processed successfully. Trip remains unsettled.");
+            } else {
+                $label = $this->statusLabels[$this->confirmAction];
+                session()->flash('success', "Trip marked as \"{$label}\" successfully.");
+            }
+
             $this->reloadTrip();
             $this->closeModals();
-            session()->flash('success', "Trip marked as \"{$label}\" successfully.");
 
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
@@ -459,12 +517,13 @@ class ViewTrip extends Component
         $this->validate(
             [
                 'end_date' => ['required', 'date', "after_or_equal:{$startDate}"],
-                'end_km' => ['required', 'integer', "min:{$minKm}"],
+                'end_km' => ['required', 'numeric', "min:{$minKm}"],
             ],
             [
                 'end_date.required' => 'End date is required.',
                 'end_date.after_or_equal' => 'End date must be on or after the trip start date (' . $this->trip->start_date?->format('d M Y') . ').',
                 'end_km.required' => 'End KM reading is required.',
+                'end_km.numeric' => 'End KM must be a number.',
                 'end_km.min' => "End KM must be at least {$minKm} km (start reading).",
             ]
         );
@@ -472,7 +531,7 @@ class ViewTrip extends Component
         // Status guard: trip must be in 'start' to allow completion
         if ($this->trip->status !== 'start') {
             session()->flash('error', 'Trip can only be completed when it is in "Started" status.');
-            $this->closeModals();
+            // $this->closeModals();
             return;
         }
 
@@ -492,6 +551,57 @@ class ViewTrip extends Component
             $this->reloadTrip();
             $this->closeModals();
             session()->flash('success', 'Trip completed successfully.');
+
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        } finally {
+            $this->updatingStatus = false;
+        }
+    }
+
+    /**
+     * Processes the "POD Received" action with file upload.
+     */
+    public function savePodModal(): void
+    {
+        $this->validate([
+            'pod_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+        ], [
+            'pod_file.required' => 'Please select a POD file.',
+            'pod_file.mimes' => 'POD file must be a PDF, JPG, JPEG, or PNG.',
+            'pod_file.max' => 'POD file must not be larger than 5MB.',
+        ]);
+
+        if ($this->trip->status !== 'completed') {
+            session()->flash('error', 'Trip must be completed before receiving POD.');
+            return;
+        }
+
+        $this->updatingStatus = true;
+
+        try {
+            DB::transaction(function () {
+                $path = null;
+                if ($this->pod_file) {
+                    $directory = "POCReceipt/Trip{$this->tripId}";
+                    if (!Storage::disk('public')->exists($directory)) {
+                        Storage::disk('public')->makeDirectory($directory);
+                    }
+                    $filename = time() . '_' . rand(1000, 9999) . '_' . $this->pod_file->getClientOriginalName();
+                    $path = $this->pod_file->storeAs($directory, $filename, 'public');
+                }
+
+                $this->trip->update([
+                    'status' => 'pod_received',
+                    'pod_receipt' => $path,
+                    'pod_received_date' => now(),
+                    'updated_by' => auth()->id(),
+                ]);
+            });
+
+            $this->reloadTrip();
+            $this->closeModals();
+            session()->flash('success', 'POD uploaded and status updated successfully.');
 
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());

@@ -12,8 +12,8 @@ class EditParty extends Component
     // Form properties - same as AddParty
     public string $name = '';
     public string $mobile = '';
-    public $opening_balance = 0;
-    public $opening_balance_date = '';
+    public ?float $opening_balance = null;
+    public ?string $opening_balance_date = null;
     public string $status = '';
 
     // Loading state for submit button
@@ -28,8 +28,8 @@ class EditParty extends Component
         // Populate form with existing data
         $this->name = $party->name;
         $this->mobile = $party->mobile ?? '';
-        $this->opening_balance = $party->opening_balance ?? 0;
-        $this->opening_balance_date = $party->opening_balance_date ? $party->opening_balance_date->format('Y-m-d') : '';
+        $this->opening_balance = $party->opening_balance;
+        $this->opening_balance_date = $party->opening_balance_date ? $party->opening_balance_date->format('Y-m-d') : null;
         $this->status = $party->status;
     }
 
@@ -41,7 +41,7 @@ class EditParty extends Component
         return [
             'name' => 'required|string|max:255', // Name is required for identification
             'mobile' => 'required|numeric|digits:10|unique:parties,mobile,' . $this->partyId, // Mobile required, max length for international numbers
-            'opening_balance' => 'required|numeric|min:0|max:99999999.99', // Balance must be non-negative decimal
+            'opening_balance' => 'nullable|numeric|min:0|max:99999999.99', // Balance is optional, non-negative decimal if provided
             'opening_balance_date' => 'nullable|date', // Date for opening balance
             'status' => 'required|string|in:active,inactive', // Status validation
         ];

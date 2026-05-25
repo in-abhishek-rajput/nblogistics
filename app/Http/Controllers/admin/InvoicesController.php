@@ -36,7 +36,8 @@ class InvoicesController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $trip = \App\Models\Trip::find($id);
+        return view('admin.bill.template', compact('trip'));
     }
 
     /**

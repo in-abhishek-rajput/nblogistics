@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TripExpense extends Model
 {
     protected $fillable = [
+        'expense_category',
+        'truck_id',
         'trip_id',
         'expense_type',
         'amount',
@@ -29,5 +31,13 @@ class TripExpense extends Model
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class);
+    }
+
+    /**
+     * Relationship with Truck.
+     */
+    public function truck(): BelongsTo
+    {
+        return $this->belongsTo(Truck::class);
     }
 }

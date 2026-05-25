@@ -1,7 +1,29 @@
 <div>
     <form wire:submit.prevent="update">
         <div class="row">
+            {{-- Expense For --}}
+            <div class="col-md-12 mb-3">
+                <label class="form-label">
+                    Expense For <span class="text-danger">*</span>
+                </label>
+                <div class="d-flex gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" wire:model.live="expense_category" value="trip" id="edit_for_trip">
+                        <label class="form-check-label" for="edit_for_trip">Trip</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" wire:model.live="expense_category" value="truck" id="edit_for_truck">
+                        <label class="form-check-label" for="edit_for_truck">Truck</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" wire:model.live="expense_category" value="office" id="edit_for_office">
+                        <label class="form-check-label" for="edit_for_office">Office</label>
+                    </div>
+                </div>
+            </div>
+
             {{-- Trip --}}
+            @if($expense_category === 'trip')
             <div class="col-md-12 mb-3">
                 <label for="trip_id" class="form-label">
                     Trip <span class="text-danger">*</span>
@@ -9,8 +31,7 @@
                 <select
                     class="form-select @error('trip_id') is-invalid @enderror"
                     id="trip_id"
-                    wire:model="trip_id"
-                    required>
+                    wire:model="trip_id">
                     <option value="">Select Trip</option>
                     @foreach ($trips as $trip)
                         <option value="{{ $trip->id }}">{{ $trip->party->name ?? 'N/A' }} - {{ $trip->origin ?? 'N/A' }} → {{ $trip->destination ?? 'N/A' }}</option>
@@ -20,6 +41,28 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
+            @endif
+
+            {{-- Truck --}}
+            @if($expense_category === 'truck')
+            <div class="col-md-12 mb-3">
+                <label for="truck_id" class="form-label">
+                    Truck <span class="text-danger">*</span>
+                </label>
+                <select
+                    class="form-select @error('truck_id') is-invalid @enderror"
+                    id="truck_id"
+                    wire:model="truck_id">
+                    <option value="">Select Truck</option>
+                    @foreach ($trucks as $truck)
+                        <option value="{{ $truck->id }}">{{ $truck->truck_number }}</option>
+                    @endforeach
+                </select>
+                @error('truck_id')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+            @endif
 
             {{-- Expense Type --}}
             <div class="col-md-12 mb-3">
@@ -32,8 +75,8 @@
                     wire:model="expense_type"
                     required>
                     <option value="">Select Expense Type</option>
-                    @foreach($expenseTypeOptions as $key => $label)
-                        <option value="{{ $key }}">{{ $label }}</option>
+                    @foreach($expenseTypeOptions as $type)
+                        <option value="{{ $type }}">{{ $type }}</option>
                     @endforeach
                 </select>
                 @error('expense_type')

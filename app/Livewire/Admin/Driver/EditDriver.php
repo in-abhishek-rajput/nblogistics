@@ -13,6 +13,7 @@ class EditDriver extends Component
     public string $name = '';
     public string $mobile = '';
     public $opening_balance = 0;
+    public $base_salary = 0;
 
     // Loading state for submit button
     public bool $saving = false;
@@ -27,6 +28,7 @@ class EditDriver extends Component
         $this->name = $driver->name;
         $this->mobile = $driver->mobile ?? '';
         $this->opening_balance = $driver->opening_balance ?? 0;
+        $this->base_salary = $driver->base_salary ?? 0;
     }
 
     /**
@@ -38,6 +40,7 @@ class EditDriver extends Component
             'name' => 'required|string|max:255', // Name is required for identification
             'mobile' => 'required|numeric|digits:10|unique:drivers,mobile,' . $this->driverId, // Mobile required, max length for international numbers
             'opening_balance' => 'required|numeric|min:0|max:99999999.99', // Balance must be non-negative decimal
+            'base_salary' => 'required|numeric|min:0|max:99999999.99', // Base salary must be non-negative decimal
         ];
     }
 
@@ -51,6 +54,8 @@ class EditDriver extends Component
             'mobile.unique' => 'This mobile is already registered.',
             'opening_balance.numeric' => 'Opening balance must be a number.',
             'opening_balance.min' => 'Opening balance cannot be negative.',
+            'base_salary.numeric' => 'Base salary must be a number.',
+            'base_salary.min' => 'Base salary cannot be negative.',
         ];
     }
 

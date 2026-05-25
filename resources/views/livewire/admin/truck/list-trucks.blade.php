@@ -10,12 +10,14 @@
     @endif
 
     {{-- Search and Filter Section --}}
-    <div class="row mb-3">
-        <div class="col-md-3">
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-6">
             <input type="text" wire:model.live.debounce.300ms="search" class="form-control"
                 placeholder="Search by truck number..." />
         </div>
-        <div class="col-md-2">
+    </div>
+    <div class="row g-2 mb-3">
+        <div class="col-12 col-md">
             <select wire:model.live="statusFilter" class="form-select">
                 <option value="">All Statuses</option>
                 @foreach ($statuses as $key => $status)
@@ -23,7 +25,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-12 col-md">
             <select wire:model.live="typeFilter" class="form-select">
                 <option value="">All Types</option>
                 @foreach ($types as $key => $type)
@@ -31,7 +33,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-12 col-md">
             <select wire:model.live="ownershipFilter" class="form-select">
                 <option value="">All Ownership</option>
                 @foreach ($ownerships as $key => $ownership)
@@ -39,7 +41,12 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-12 col-md-auto">
+            <button type="button" wire:click="resetFilters" class="btn btn-secondary w-100" title="Reset Filters">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </button>
+        </div>
+        <div class="col-12 col-md-auto">
             <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#addTruckModal">
                 <i class="bi bi-plus"></i> Add Truck
             </button>

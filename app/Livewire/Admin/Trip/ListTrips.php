@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Trip;
 
 use App\Models\Trip;
+use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -33,6 +34,11 @@ class ListTrips extends Component
     public $showDeleteConfirm = false;
     public $deleteTripId = null;
 
+    // Date filter properties
+    public $from_date = null;
+    public $to_date = null;
+    public string $selectedDateFilter = 'all_months';
+
     // Refresh trigger for forcing re-render after updates
     public $refreshTrigger = 0;
 
@@ -56,6 +62,35 @@ class ListTrips extends Component
 
     public function updatingBillingTypeFilter()
     {
+        $this->resetPage();
+    }
+
+    public function updatingFromDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingToDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSelectedDateFilter($value)
+    {
+        if ($value === 'custom') {
+            $this->dispatch('showCustomDateModal');
+        } else {
+            $this->from_date = null;
+            $this->to_date = null;
+        }
+        $this->resetPage();
+    }
+
+    // Reset all filters
+    public function resetFilters()
+    {
+        $this->reset(['search', 'statusFilter', 'billingTypeFilter', 'from_date', 'to_date', 'selectedDateFilter']);
+        $this->selectedDateFilter = 'all_months';
         $this->resetPage();
     }
 
@@ -138,12 +173,51 @@ class ListTrips extends Component
     // Computed property for trips query - dynamic and efficient
     public function getTripsProperty()
     {
-        return Trip::query()
+        $query = Trip::query()
             ->with(['party', 'truck']) // Eager load party and truck
             ->search($this->search) // Use scope for search
             ->status($this->statusFilter) // Use scope for status filter
-            ->billingType($this->billingTypeFilter) // Use scope for billing type filter
-            ->orderBy($this->sortColumn, $this->sortDirection) // Dynamic sorting
+            ->billingType($this->billingTypeFilter); // Use scope for billing type filter
+
+        // Date filtering
+        if ($this->selectedDateFilter === 'custom') {
+            if ($this->from_date && $this->to_date) {
+                $query->whereBetween('start_date', [
+                    Carbon::parse($this->from_date)->startOfDay(),
+                    Carbon::parse($this->to_date)->endOfDay(),
+                ]);
+            } else if ($this->from_date) {
+                $query->whereDate('start_date', $this->from_date);
+            }
+        } else {
+            switch ($this->selectedDateFilter) {
+                case 'today':
+                    $query->whereDate('start_date', Carbon::today());
+                    break;
+                case 'this_week':
+                    $query->whereBetween('start_date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                    break;
+                case 'last_week':
+                    $query->whereBetween('start_date', [Carbon::now()->subWeek()->startOfWeek(), Carbon::now()->subWeek()->endOfWeek()]);
+                    break;
+                case 'this_month':
+                    $query->whereMonth('start_date', Carbon::now()->month)
+                          ->whereYear('start_date', Carbon::now()->year);
+                    break;
+                case 'last_month':
+                    $query->whereMonth('start_date', Carbon::now()->subMonth()->month)
+                          ->whereYear('start_date', Carbon::now()->subMonth()->year);
+                    break;
+                case 'last_3_months':
+                    $query->where('start_date', '>=', Carbon::now()->subMonths(3));
+                    break;
+                case 'this_year':
+                    $query->whereYear('start_date', Carbon::now()->year);
+                    break;
+            }
+        }
+
+        return $query->orderBy($this->sortColumn, $this->sortDirection) // Dynamic sorting
             ->paginate(10); // Server-side pagination
     }
 
@@ -159,12 +233,19 @@ class ListTrips extends Component
         return config('trip.billing_types');
     }
 
+    // Get available date filters
+    public function getDateFiltersProperty()
+    {
+        return config('trip.date_filters');
+    }
+
     public function render()
     {
         return view('livewire.admin.trip.list-trips', [
             'trips' => $this->trips, // Pass computed property
             'statuses' => $this->statuses, // Pass statuses for filter
             'billingTypes' => $this->billingTypes, // Pass billing types for filter
+            'dateFilters' => $this->dateFilters, // Pass date filters
         ]);
     }
 }
