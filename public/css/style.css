@@ -429,3 +429,54 @@ a {
     background: var(--dark);
     border-color: var(--primary);
 }
+
+/* Print Styles for Reports */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body * {
+        visibility: hidden;
+    }
+    
+    #report-content, #report-content * {
+        visibility: visible;
+    }
+    
+    #report-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    /* Hide Bootstrap offcanvas and modals during print */
+    .offcanvas, .modal {
+        display: none !important;
+    }
+    
+    /* Ensure tables break nicely across pages */
+    table {
+        page-break-inside: auto;
+    }
+    
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+    
+    thead {
+        display: table-header-group;
+    }
+    
+    /* Adjust margins for better print layout */
+    @page {
+        margin: 0.5in;
+    }
+    
+    body {
+        margin: 0;
+        padding: 0;
+    }
+}

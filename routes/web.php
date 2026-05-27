@@ -42,9 +42,13 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('expenses', ExpensesController::class);
     Route::resource('invoices', InvoicesController::class);
     Route::resource('builty', BiltyController::class);
-    Route::resource('reports', ReportsController::class);
     Route::resource('profile', ProfileController::class);
-
+    
+    // Reports Routes
+    Route::get('reports/trips', [ReportsController::class, 'trips'])->name('reports.trips');
+    Route::get('reports/trucks', [ReportsController::class, 'trucks'])->name('reports.trucks');
+    Route::get('reports/drivers', [ReportsController::class, 'drivers'])->name('reports.drivers');
+    
     // Trip Expenses
     Route::get('trip-expenses', function () {
         return view('admin.trip-expenses.list');
