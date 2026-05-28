@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Livewire\Component;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
 
 class TripsReport extends Component
 {
