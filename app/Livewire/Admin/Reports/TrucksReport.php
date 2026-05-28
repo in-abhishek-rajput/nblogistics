@@ -7,6 +7,8 @@ use App\Models\Truck;
 use App\Models\TripExpense;
 use Carbon\Carbon;
 use Livewire\Component;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class TrucksReport extends Component
 {
@@ -139,6 +141,65 @@ class TrucksReport extends Component
     public function printReport()
     {
         $this->dispatch('printReport');
+    }
+
+    // Export report data
+    public function exportReport()
+    {
+        $data = [];
+        foreach ($this->summary['truck_performance'] as $truck) {
+            $data[] = [
+                $truck['truck_number'],
+                $truck['truck_type'],
+                $truck['driver_name'],
+                $truck['trips_count'],
+                $truck['income'],
+                $truck['expenses'],
+                $truck['maintenance_expenses'],
+                $truck['profit'],
+                $truck['utilization'] . '%',
+            ];
+        }
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new class($data) implements FromCollection, WithHeadings, WithStyles {
+            protected $data;
+
+            public function __construct($data)
+            {
+                $this->data = $data;
+            }
+
+            public function collection()
+            {
+                return collect($this->data);
+            }
+
+            public function headings(): array
+            {
+                return [
+                    'Truck Number',
+                    'Type',
+                    'Assigned Driver',
+                    'Trips Count',
+                    'Income',
+                    'Expenses',
+                    'Maintenance',
+                    'Profit',
+                    'Utilization %'
+                ];
+            }
+
+            public function styles($sheet)
+            {
+                // Make heading bold
+                $sheet->getStyle('1:1')->getFont()->setBold(true);
+                // Auto size columns
+                foreach ($sheet->getColumnIterator() as $column) {
+                    $sheet->getColumnDimension($column->getColumnIndex())
+                        ->setAutoSize(true);
+                }
+            }
+        }, 'trucks-report.xlsx');
     }
 
     // Helper methods for dropdowns

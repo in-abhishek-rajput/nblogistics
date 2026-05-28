@@ -29,6 +29,9 @@
             <button wire:click="printReport" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-printer me-1"></i>Print
             </button>
+            <button wire:click="exportReport" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-file-earmark-excel me-1"></i>Export
+            </button>
         </div>
     </div>
 
@@ -45,7 +48,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-primary">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                        <div class="rounded-circle">
                             <i class="bi bi-person fs-4 text-primary"></i>
                         </div>
                         <div>
@@ -58,7 +61,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-success">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                        <div class="rounded-circle ">
                             <i class="bi bi-person-check fs-4 text-success"></i>
                         </div>
                         <div>
@@ -71,7 +74,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-warning">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                        <div class="rounded-circle ">
                             <i class="bi bi-truck fs-4 text-warning"></i>
                         </div>
                         <div>
@@ -85,7 +88,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-danger">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                        <div class="rounded-circle ">
                             <i class="bi bi-person-x fs-4 text-danger"></i>
                         </div>
                         <div>

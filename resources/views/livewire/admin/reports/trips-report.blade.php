@@ -40,6 +40,9 @@
             <button wire:click="printReport" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-printer me-1"></i>Print
             </button>
+            <button wire:click="exportReport" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-file-earmark-excel me-1"></i>Export
+            </button>
         </div>
     </div>
 
@@ -62,7 +65,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-primary">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                        <div class="rounded-circle ">
                             <i class="bi bi-clipboard-data fs-4 text-primary"></i>
                         </div>
                         <div>
@@ -76,7 +79,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-success">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                        <div class="rounded-circle">
                             <i class="bi bi-check-circle fs-4 text-success"></i>
                         </div>
                         <div>
@@ -90,7 +93,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-warning">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                        <div class="rounded-circle ">
                             <i class="bi bi-hourglass-split fs-4 text-warning"></i>
                         </div>
                         <div>
@@ -104,7 +107,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-danger">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                        <div class="rounded-circle">
                             <i class="bi bi-x-circle fs-4 text-danger"></i>
                         </div>
                         <div>
@@ -124,8 +127,8 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-info">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-info bg-opacity-10 p-3">
-                            <i class="bi bi-currency-rupee fs-4 text-info"></i>
+                        <div class="rounded-circle ">
+                            <i class="bi bi-finance fs-4 text-info"></i>
                         </div>
                         <div>
                             <div class="text-muted small fw-semibold text-uppercase">Party Amount</div>
@@ -140,7 +143,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-secondary">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-secondary bg-opacity-10 p-3">
+                        <div class="rounded-circle">
                             <i class="bi bi-receipt fs-4 text-secondary"></i>
                         </div>
                         <div>
@@ -156,7 +159,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 {{ $isProfit ? 'border-success' : 'border-danger' }}">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle {{ $isProfit ? 'bg-success' : 'bg-danger' }} bg-opacity-10 p-3">
+                        <div class="rounded-circle">
                             <i class="bi {{ $isProfit ? 'bi-graph-up-arrow text-success' : 'bi-graph-down-arrow text-danger' }} fs-4"></i>
                         </div>
                         <div>
@@ -172,7 +175,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 border-start border-4 border-dark">
                     <div class="card-body d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-dark bg-opacity-10 p-3">
+                        <div class="rounded-circle">
                             <i class="bi bi-bar-chart-line fs-4 text-dark"></i>
                         </div>
                         <div>

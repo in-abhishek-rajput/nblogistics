@@ -6,6 +6,8 @@ use App\Models\Trip;
 use App\Models\TripExpense;
 use Carbon\Carbon;
 use Livewire\Component;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class TripsReport extends Component
 {
@@ -128,6 +130,60 @@ class TripsReport extends Component
     public function printReport(): void
     {
         $this->dispatch('printReport');
+    }
+
+    // ── Export report data ──
+    public function exportReport()
+    {
+        $data = [];
+        foreach ($this->summary['trip_rows'] as $index => $trip) {
+            $data[] = [
+                $index + 1,
+                $trip['date'],
+                $trip['party'],
+                $trip['truck'],
+                $trip['driver'],
+                $trip['origin'],
+                $trip['destination'],
+                $trip['freight_amount'],
+                $trip['expenses'],
+                $trip['profit'],
+                ucwords(str_replace('_', ' ', $trip['status'])),
+            ];
+        }
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new class($data) implements FromCollection, WithHeadings, WithStyles {
+            protected $data;
+
+            public function __construct($data)
+            {
+                $this->data = $data;
+            }
+
+            public function collection()
+            {
+                return collect($this->data);
+            }
+
+            public function headings(): array
+            {
+                return [
+                    '#', 'Date', 'Party', 'Truck', 'Driver', 'Origin', 'Destination',
+                    'Freight (₹)', 'Expenses (₹)', 'Profit (₹)', 'Status'
+                ];
+            }
+
+            public function styles($sheet)
+            {
+                // Make heading bold
+                $sheet->getStyle('1:1')->getFont()->setBold(true);
+                // Auto size columns
+                foreach ($sheet->getColumnIterator() as $column) {
+                    $sheet->getColumnDimension($column->getColumnIndex())
+                        ->setAutoSize(true);
+                }
+            }
+        }, 'trips-report.xlsx');
     }
 
     // ── Pass ALL required variables explicitly to blade ──

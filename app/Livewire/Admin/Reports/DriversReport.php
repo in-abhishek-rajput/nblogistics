@@ -6,6 +6,8 @@ use App\Models\Trip;
 use App\Models\Driver;
 use Carbon\Carbon;
 use Livewire\Component;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class DriversReport extends Component
 {
@@ -146,6 +148,63 @@ class DriversReport extends Component
     public function printReport()
     {
         $this->dispatch('printReport');
+    }
+
+    // Export report data
+    public function exportReport()
+    {
+        $data = [];
+        foreach ($this->summary['driver_performance'] as $driver) {
+            $data[] = [
+                $driver['name'],
+                $driver['mobile'],
+                $driver['truck_number'],
+                $driver['trips_count'],
+                $driver['earnings'],
+                $driver['average_earnings_per_trip'],
+                $driver['completed_trips'],
+                $driver['ongoing_trips'],
+            ];
+        }
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new class($data) implements FromCollection, WithHeadings, WithStyles {
+            protected $data;
+
+            public function __construct($data)
+            {
+                $this->data = $data;
+            }
+
+            public function collection()
+            {
+                return collect($this->data);
+            }
+
+            public function headings(): array
+            {
+                return [
+                    'Driver Name',
+                    'Mobile',
+                    'Truck Assigned',
+                    'Trips Count',
+                    'Earnings',
+                    'Avg. Earnings/Trip',
+                    'Completed Trips',
+                    'Ongoing Trips'
+                ];
+            }
+
+            public function styles($sheet)
+            {
+                // Make heading bold
+                $sheet->getStyle('1:1')->getFont()->setBold(true);
+                // Auto size columns
+                foreach ($sheet->getColumnIterator() as $column) {
+                    $sheet->getColumnDimension($column->getColumnIndex())
+                        ->setAutoSize(true);
+                }
+            }
+        }, 'drivers-report.xlsx');
     }
 
     // Helper methods for dropdowns
