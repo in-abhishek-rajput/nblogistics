@@ -20,7 +20,7 @@ class TripsReport extends Component
     public function mount(): void
     {
         $this->month = (int) Carbon::now()->month;
-        $this->year  = (int) Carbon::now()->year;
+        $this->year = (int) Carbon::now()->year;
         $this->fetchData();
     }
 
@@ -47,27 +47,27 @@ class TripsReport extends Component
             ->get();
 
         // ── Status counts ──
-        $totalTrips     = $trips->count();
+        $totalTrips = $trips->count();
         $completedTrips = $trips->whereIn('status', ['completed', 'pod_received', 'pod_submitted', 'settled'])->count();
-        $ongoingTrips   = $trips->whereIn('status', ['pending', 'start'])->count();
+        $ongoingTrips = $trips->whereIn('status', ['pending', 'start'])->count();
         $cancelledTrips = $trips->where('status', 'cancelled')->count();
 
         // ── Financial totals ──
-        $totalFreight     = $trips->sum('freight_amount');
-        $totalExpenses    = 0;
+        $totalFreight = $trips->sum('freight_amount');
+        $totalExpenses = 0;
         $expenseBreakdown = [];
 
         $tripIds = $trips->pluck('id')->toArray();
 
         if (!empty($tripIds)) {
             $expenses = TripExpense::whereIn('trip_id', $tripIds)
-                ->where('expense_category', 'trip')
                 ->get();
 
             $totalExpenses = $expenses->sum('amount');
 
             // Group expenses by type for breakdown table
             $expenseBreakdown = $expenses
+                ->filter(fn($e) => !empty($e->expense_type))
                 ->groupBy('expense_type')
                 ->mapWithKeys(fn($group) => [
                     $group->first()->expense_type => $group->sum('amount')
@@ -75,7 +75,7 @@ class TripsReport extends Component
                 ->toArray();
         }
 
-        $profitLoss        = $totalFreight - $totalExpenses;
+        $profitLoss = $totalFreight - $totalExpenses;
         $averageTripProfit = $totalTrips > 0 ? round($profitLoss / $totalTrips, 2) : 0;
 
         // ── Top route by trip count ──
@@ -83,46 +83,44 @@ class TripsReport extends Component
             ->filter(fn($t) => $t->origin && $t->destination)
             ->groupBy(fn($t) => $t->origin . '|' . $t->destination)
             ->map(fn($group) => [
-                'origin'      => $group->first()->origin,
+                'origin' => $group->first()->origin,
                 'destination' => $group->first()->destination,
-                'trip_count'  => $group->count(),
+                'trip_count' => $group->count(),
             ])
             ->sortByDesc('trip_count')
             ->first();
 
         // ── Per-trip rows for overview table ──
         $tripRows = $trips->map(function ($trip) {
-            $tripExpenses = $trip->expenses
-                ->where('expense_category', 'trip')
-                ->sum('amount');
+            $tripExpenses = $trip->expenses->sum('amount');
 
             return [
-                'date'           => $trip->start_date->format('d M Y'),
-                'party'          => $trip->party?->name         ?? $trip->party_name   ?? '—',
-                'truck'          => $trip->truck?->truck_number  ?? $trip->truck_name   ?? '—',
-                'driver'         => $trip->driver?->name         ?? $trip->driver_name  ?? '—',
-                'origin'         => $trip->origin                                       ?? '—',
-                'destination'    => $trip->destination                                  ?? '—',
+                'date' => $trip->start_date->format('d M Y'),
+                'party' => $trip->party?->name ?? $trip->party_name ?? '—',
+                'truck' => $trip->truck?->truck_number ?? $trip->truck_name ?? '—',
+                'driver' => $trip->driver?->name ?? $trip->driver_name ?? '—',
+                'origin' => $trip->origin ?? '—',
+                'destination' => $trip->destination ?? '—',
                 'freight_amount' => $trip->freight_amount,
-                'expenses'       => $tripExpenses,
-                'profit'         => $trip->freight_amount - $tripExpenses,
-                'status'         => $trip->status,
+                'expenses' => $tripExpenses,
+                'profit' => $trip->freight_amount - $tripExpenses,
+                'status' => $trip->status,
             ];
         })->values()->toArray();
 
         // ── Store everything in summary array ──
         $this->summary = [
-            'total_trips'         => $totalTrips,
-            'completed_trips'     => $completedTrips,
-            'ongoing_trips'       => $ongoingTrips,
-            'cancelled_trips'     => $cancelledTrips,
-            'total_freight'       => $totalFreight,
-            'total_expenses'      => $totalExpenses,
-            'profit_loss'         => $profitLoss,
+            'total_trips' => $totalTrips,
+            'completed_trips' => $completedTrips,
+            'ongoing_trips' => $ongoingTrips,
+            'cancelled_trips' => $cancelledTrips,
+            'total_freight' => $totalFreight,
+            'total_expenses' => $totalExpenses,
+            'profit_loss' => $profitLoss,
             'average_trip_profit' => $averageTripProfit,
-            'expense_breakdown'   => $expenseBreakdown,
-            'top_route'           => $topRoute,
-            'trip_rows'           => $tripRows,
+            'expense_breakdown' => $expenseBreakdown,
+            'top_route' => $topRoute,
+            'trip_rows' => $tripRows,
         ];
     }
 
@@ -136,19 +134,28 @@ class TripsReport extends Component
     public function render()
     {
         $monthNames = [
-            1 => 'January',   2 => 'February', 3 => 'March',    4 => 'April',
-            5 => 'May',       6 => 'June',     7 => 'July',     8 => 'August',
-            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December',
+            1 => 'January',
+            2 => 'February',
+            3 => 'March',
+            4 => 'April',
+            5 => 'May',
+            6 => 'June',
+            7 => 'July',
+            8 => 'August',
+            9 => 'September',
+            10 => 'October',
+            11 => 'November',
+            12 => 'December',
         ];
 
         $currentYear = Carbon::now()->year;
 
         return view('livewire.admin.reports.trips-report', [
-            'monthNames'     => $monthNames,
-            'years'          => range($currentYear - 5, $currentYear + 5),
-            'selectedMonth'  => $this->month,
-            'selectedYear'   => $this->year,
-            'summary'        => $this->summary,
+            'monthNames' => $monthNames,
+            'years' => range($currentYear - 5, $currentYear + 5),
+            'selectedMonth' => $this->month,
+            'selectedYear' => $this->year,
+            'summary' => $this->summary,
         ]);
     }
 }
