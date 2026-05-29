@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\Trip;
 
 class Driver extends Model
 {
@@ -68,6 +69,14 @@ class Driver extends Model
     public function attendances()
     {
         return $this->hasMany(DriverAttendance::class);
+    }
+
+    /**
+     * Get the trips for the driver.
+     */
+    public function trips()
+    {
+        return $this->hasMany(Trip::class);
     }
 }
 

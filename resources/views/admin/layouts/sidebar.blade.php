@@ -23,7 +23,14 @@
             <a href="{{ route('trip-expenses') }}" class="nav-item nav-link {{ request()->routeIs('trip-expenses.*') ? 'active' : '' }}"><i class="fa fa-receipt me-2"></i>Expenses</a>
             <a href="{{ route('invoices.index') }}" class="nav-item nav-link {{ request()->routeIs('invoices.*') ? 'active' : '' }}"><i class="fa fa-file-invoice me-2"></i>Invoices</a>
             <a href="{{ route('builty.index') }}" class="nav-item nav-link {{ request()->routeIs('builty.*') ? 'active' : '' }}"><i class="fa fa-list me-2"></i>Builty</a>
-            <a href="{{ route('reports.index') }}" class="nav-item nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}"><i class="fa fa-file me-2"></i>Reports</a>
+            <div class="dropdown dropstart">
+                <a href="#" class="nav-item nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" data-bs-toggle="dropdown"><i class="fa fa-file me-2"></i>Reports</a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('reports.trips') }}">Trips Report</a></li>
+                    <li><a class="dropdown-item" href="{{ route('reports.trucks') }}">Trucks Report</a></li>
+                    <li><a class="dropdown-item" href="{{ route('reports.drivers') }}">Drivers Report</a></li>
+                </ul>
+            </div>
             <a href="{{ route('profile.index') }}" class="nav-item nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}"><i class="fa fa-id-card me-2"></i>Profile</a>
         </div>
 
