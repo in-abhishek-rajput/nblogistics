@@ -37,7 +37,8 @@ class BiltyController extends Controller
     public function show(string $id)
     {
         $trip = \App\Models\Trip::find($id);
-        return view('admin.bilty.template', compact('trip'));
+        $document = \App\Models\TripDocument::bilty()->where('trip_id', $id)->first();
+        return view('admin.bilty.template', compact('trip', 'document'));
     }
 
     /**

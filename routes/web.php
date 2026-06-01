@@ -8,6 +8,7 @@ use App\Http\Controllers\admin\ExpensesController;
 use App\Http\Controllers\admin\InvoicesController;
 use App\Http\Controllers\admin\PartiesController;
 use App\Http\Controllers\admin\ProfileController;
+use App\Http\Controllers\admin\ReceiptController;
 use App\Http\Controllers\admin\ReportsController;
 use App\Http\Controllers\admin\TripsController;
 use App\Http\Controllers\admin\TrucksController;
@@ -42,7 +43,13 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('expenses', ExpensesController::class);
     Route::resource('invoices', InvoicesController::class);
     Route::resource('builty', BiltyController::class);
+    Route::resource('receipts', ReceiptController::class);
     Route::resource('profile', ProfileController::class);
+    
+    // Trip Document Wizard (Bilty → Invoice → Receipt)
+    Route::get('trips/{tripId}/documents/{step?}', function ($tripId, $step = 1) {
+        return view('admin.trip.documents', ['tripId' => (int) $tripId, 'step' => (int) $step]);
+    })->name('trip.documents');
     
     // Reports Routes
     Route::get('reports/trips', [ReportsController::class, 'trips'])->name('reports.trips');

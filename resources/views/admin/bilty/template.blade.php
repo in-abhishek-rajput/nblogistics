@@ -287,7 +287,7 @@
             
             <div class="flex items-center mt-2" style="margin-top: 10px;">
                 <div class="logo-area">
-                    <img src="{{ asset('img/nb-logo.png') }}" alt="NB Logistics Logo" style="max-width: 130px; display: block;">
+                    <img src="{{ asset('img/logo.png') }}" alt="NB Logistics Logo" style="max-width: 130px; display: block;">
                 </div>
                 <div class="company-info">
                     <div class="company-title">N. B. LOGISTICS</div>
@@ -302,44 +302,44 @@
         <!-- Details -->
         <table class="info-table">
             <tr>
-                <td style="width: 33%; border-right: none;" class="text-red">LR NO.: <span style="font-size: 16px;">{{ $trip->lr_number ?? '0073' }}</span></td>
+                <td style="width: 33%; border-right: none;" class="text-red">LR NO.: <span style="font-size: 16px;">{{ $document->data['lr_number'] ?? ($trip->lr_number ?? '') }}</span></td>
                 <td style="width: 34%; padding: 0; border-left: none; border-right: none;">
                     <div class="pan-box">PAN NO.: GNWPS1050M</div>
                 </td>
-                <td style="width: 33%; border-left: none;">FROM : {{ $trip->origin ?? '' }}</td>
+                <td style="width: 33%; border-left: none;">FROM : {{ $document->data['bilty_from'] ?? ($trip->origin ?? '') }}</td>
             </tr>
             <tr>
-                <td>DATE : <span style="font-weight: normal;">{{ isset($trip->start_date) && $trip->start_date ? $trip->start_date->format('d/m/Y') : date('d/m/Y') }}</span></td>
+                <td>DATE : <span style="font-weight: normal;">{{ isset($document->data['lr_date']) ? \Carbon\Carbon::parse($document->data['lr_date'])->format('d/m/Y') : (isset($trip->start_date) && $trip->start_date ? $trip->start_date->format('d/m/Y') : date('d/m/Y')) }}</span></td>
                 <td rowspan="2" style="padding: 0;">
                     <div class="risk-box">
                         <div>AT OWNER RISK</div>
                         <div class="checkbox-group">
-                            <span>GST PAID BY: CONSIGNOR</span> <div class="checkbox-box"></div>
-                            <span>CONSIGNEE</span> <div class="checkbox-box"></div>
+                            <span>GST PAID BY: CONSIGNOR</span> <div class="checkbox-box" style="{{ (isset($document->data['gst_paid_by']) && $document->data['gst_paid_by'] == 'consignor') ? 'background-color: #2b3d75;' : '' }}"></div>
+                            <span>CONSIGNEE</span> <div class="checkbox-box" style="{{ (isset($document->data['gst_paid_by']) && $document->data['gst_paid_by'] == 'consignee') ? 'background-color: #2b3d75;' : '' }}"></div>
                         </div>
                     </div>
                 </td>
-                <td>TO : {{ $trip->destination ?? '' }}</td>
+                <td>TO : {{ $document->data['bilty_to'] ?? ($trip->destination ?? '') }}</td>
             </tr>
             <tr>
-                <td>VEHICLE NO. <span style="font-weight: normal;">{{ isset($trip->truck) ? $trip->truck->truck_number : ($trip->truck_name ?? '') }}</span></td>
-                <td>INVOICE NO.: </td>
+                <td>VEHICLE NO. <span style="font-weight: normal;">{{ $document->data['vehicle_no'] ?? (isset($trip->truck) ? $trip->truck->truck_number : ($trip->truck_name ?? '')) }}</span></td>
+                <td>INVOICE NO.: <span style="font-weight: normal;">{{ $document->data['bilty_invoice_no'] ?? '' }}</span></td>
             </tr>
             <tr>
-                <td colspan="2" style="height: 35px;">CONSIGNOR : <span style="font-weight: normal;">{{ isset($trip->party) ? $trip->party->name : ($trip->party_name ?? '') }}</span></td>
-                <td style="height: 35px;">CONSIGNEE : </td>
+                <td colspan="2" style="height: 35px;">CONSIGNOR : <span style="font-weight: normal;">{{ $document->data['consignor_name'] ?? (isset($trip->party) ? $trip->party->name : ($trip->party_name ?? '')) }}</span></td>
+                <td style="height: 35px;">CONSIGNEE : <span style="font-weight: normal;">{{ $document->data['consignee_name'] ?? '' }}</span></td>
             </tr>
             <tr>
-                <td colspan="2" style="height: 35px;">ADDRESS : </td>
-                <td style="height: 35px;">ADDRESS : </td>
+                <td colspan="2" style="height: 35px;">ADDRESS : <span style="font-weight: normal;">{{ $document->data['consignor_address'] ?? '' }}</span></td>
+                <td style="height: 35px;">ADDRESS : <span style="font-weight: normal;">{{ $document->data['consignee_address'] ?? '' }}</span></td>
             </tr>
             <tr>
-                <td colspan="2">MOBILE NO.: </td>
-                <td>MOBILE NO.: </td>
+                <td colspan="2">MOBILE NO.: <span style="font-weight: normal;">{{ $document->data['consignor_mobile'] ?? '' }}</span></td>
+                <td>MOBILE NO.: <span style="font-weight: normal;">{{ $document->data['consignee_mobile'] ?? '' }}</span></td>
             </tr>
             <tr>
-                <td colspan="2">GST NO.: </td>
-                <td>GST NO.: </td>
+                <td colspan="2">GST NO.: <span style="font-weight: normal;">{{ $document->data['consignor_gst'] ?? '' }}</span></td>
+                <td>GST NO.: <span style="font-weight: normal;">{{ $document->data['consignee_gst'] ?? '' }}</span></td>
             </tr>
         </table>
 
@@ -352,14 +352,14 @@
                 <th style="width: 30%;">FRIGHT<br>TO PAY / PAID</th>
             </tr>
             <tr>
-                <td style="height: 250px;"><span style="font-weight: normal;">{{ $trip->number_of_packages ?? '' }}</span></td>
-                <td><span style="font-weight: normal;">{{ $trip->material_name ?? '' }}</span></td>
-                <td><span style="font-weight: normal;">{{ $trip->actual_weight ?? '' }}</span></td>
+                <td style="height: 250px;"><span style="font-weight: normal;">{{ $document->data['no_of_packages'] ?? ($trip->number_of_packages ?? '') }}</span></td>
+                <td><span style="font-weight: normal;">{{ $document->data['description_of_goods'] ?? ($trip->material_name ?? '') }}</span></td>
+                <td><span style="font-weight: normal;">{{ $document->data['actual_weight'] ?? ($trip->actual_weight ?? '') }}</span></td>
                 <td class="freight-col">
                     <table class="freight-inner-table">
                         <tr>
                             <td>FRIGHT :</td>
-                            <td><span style="font-weight: normal;">{{ isset($trip->freight_amount) ? number_format($trip->freight_amount, 2) : '' }}</span></td>
+                            <td><span style="font-weight: normal;">{{ isset($document->data['bilty_freight_amount']) ? number_format((float)$document->data['bilty_freight_amount'], 2) : '' }}</span></td>
                         </tr>
                         <tr>
                             <td></td>
@@ -388,22 +388,22 @@
                 <td colspan="2" style="border-top: none;"></td>
                 <td class="freight-col">
                     <div class="charges-weight-box">
-                        <span>CHARGES WEIGHT</span>
+                        <span>CHARGES WEIGHT</span> <span style="font-weight: normal;">{{ $document->data['charged_weight'] ?? '' }}</span>
                     </div>
                 </td>
                 <td class="freight-col">
                     <table class="freight-inner-table">
                         <tr>
                             <td>HAMALI CHARGES :</td>
-                            <td></td>
+                            <td><span style="font-weight: normal;">{{ isset($document->data['hamali_charges']) && $document->data['hamali_charges'] > 0 ? number_format((float)$document->data['hamali_charges'], 2) : '' }}</span></td>
                         </tr>
                         <tr>
                             <td>BILTY CHARGES :</td>
-                            <td></td>
+                            <td><span style="font-weight: normal;">{{ isset($document->data['bilty_charges']) && $document->data['bilty_charges'] > 0 ? number_format((float)$document->data['bilty_charges'], 2) : '' }}</span></td>
                         </tr>
                         <tr>
                             <td>ADVANCE AMOUNT :</td>
-                            <td><span style="font-weight: normal;">{{ isset($trip->advances) ? number_format($trip->advances->sum('amount'), 2) : '' }}</span></td>
+                            <td><span style="font-weight: normal;">{{ isset($document->data['advance_amount']) && $document->data['advance_amount'] > 0 ? number_format((float)$document->data['advance_amount'], 2) : '' }}</span></td>
                         </tr>
                     </table>
                 </td>
@@ -413,13 +413,13 @@
         <!-- Bottom Table -->
         <table class="bottom-table">
             <tr>
-                <td style="width: 35%;">E-WAY BILL NO.:</td>
-                <td style="width: 20%; text-align: center;">INVOICE VALUE</td>
-                <td style="width: 15%; text-align: center;">RATE</td>
-                <td style="width: 30%; text-align: center;">TOTAL AMOUNT</td>
+                <td style="width: 35%;">E-WAY BILL NO.: <span style="font-weight: normal;">{{ $document->data['eway_bill_no'] ?? '' }}</span></td>
+                <td style="width: 20%; text-align: center;">INVOICE VALUE<br><span style="font-weight: normal;">{{ $document->data['invoice_value'] ?? '' }}</span></td>
+                <td style="width: 15%; text-align: center;">RATE<br><span style="font-weight: normal;">{{ $document->data['bilty_rate'] ?? '' }}</span></td>
+                <td style="width: 30%; text-align: center;">TOTAL AMOUNT<br><span style="font-weight: normal;">{{ isset($document->data['bilty_total']) ? number_format((float)$document->data['bilty_total'], 2) : '' }}</span></td>
             </tr>
             <tr>
-                <td colspan="4" style="height: 35px;">REMARK : <span style="font-weight: normal;">{{ $trip->notes ?? '' }}</span></td>
+                <td colspan="4" style="height: 35px;">REMARK : <span style="font-weight: normal;">{{ $document->data['bilty_remark'] ?? ($trip->notes ?? '') }}</span></td>
             </tr>
         </table>
 

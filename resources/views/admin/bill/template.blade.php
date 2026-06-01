@@ -69,7 +69,7 @@
             text-align: center;
             font-weight: bold;
             font-size: 14px;
-            width: 110%;
+            width: 100%;
             margin-left: -5%;
             margin-bottom: 10px;
             border: 1px solid var(--border-color);
@@ -395,11 +395,11 @@
             <div style="width: 32%; padding: 10px;">
                 <div style="font-size: 9px; font-weight: bold; margin-bottom: 10px;">SUBJECT TO JAMNAGAR JURISDICTION</div>
                 <div style="text-align: center;">
-                    <img src="{{ asset('img/nb-logo.png') }}" alt="NB Logistics Logo" style="max-width: 140px; margin-top: 10px;">
+                    <img src="{{ asset('img/logo.png') }}" alt="NB Logistics Logo" style="max-width: 140px; margin-top: 10px;">
                 </div>
             </div>
             <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 15px;">
-                <div class="pan-box">PAN NO.: GNWPS1050M</div>
+                <div class="bill-title-box" style="margin-bottom:10px;">PAN NO.: GNWPS1050M</div>
                 <div class="bill-title-box">BILL (TAX INVOICE)</div>
             </div>
             <div style="width: 35%; border-left: 1px solid var(--border-color); display: flex; flex-direction: column;">
@@ -417,30 +417,30 @@
             <div class="col-left-details">
                 <div class="kv-row">
                     <div class="key">INVOICE NO.</div>
-                    <div class="val">{{ $trip->id ?? '' }}</div>
+                    <div class="val">{{ $document->data['invoice_number'] ?? ($trip->id ?? '') }}</div>
                 </div>
                 <div class="kv-row">
                     <div class="key">INVOICE DATE</div>
-                    <div class="val">{{ date('d/m/Y') }}</div>
+                    <div class="val">{{ isset($document->data['invoice_date']) ? \Carbon\Carbon::parse($document->data['invoice_date'])->format('d/m/Y') : date('d/m/Y') }}</div>
                 </div>
                 <div class="kv-row">
                     <div class="key">VEHICLE NO.</div>
-                    <div class="val">{{ isset($trip->truck) ? $trip->truck->truck_number : ($trip->truck_name ?? '') }}</div>
+                    <div class="val">{{ $document->data['inv_vehicle_no'] ?? (isset($trip->truck) ? $trip->truck->truck_number : ($trip->truck_name ?? '')) }}</div>
                 </div>
                 <div class="kv-row">
                     <div class="key">L. R. NO.</div>
-                    <div class="val">{{ $trip->lr_number ?? '' }}</div>
+                    <div class="val">{{ $document->data['inv_lr_no'] ?? ($trip->lr_number ?? '') }}</div>
                 </div>
             </div>
             
             <div class="col-mid-details">
                 <div class="from-to-box">
                     <div class="from-to-title">FROM</div>
-                    <div class="from-to-input">{{ $trip->origin ?? '' }}</div>
+                    <div class="from-to-input">{{ $document->data['inv_from'] ?? ($trip->origin ?? '') }}</div>
                 </div>
                 <div class="from-to-box">
                     <div class="from-to-title">TO</div>
-                    <div class="from-to-input">{{ $trip->destination ?? '' }}</div>
+                    <div class="from-to-input">{{ $document->data['inv_to'] ?? ($trip->destination ?? '') }}</div>
                 </div>
             </div>
 
@@ -451,32 +451,32 @@
                         <th>AMOUNT (RS)</th>
                     </tr>
                     <tr>
-                        <td>FRIGHT</td>
-                        <td>{{ isset($trip->freight_amount) ? number_format($trip->freight_amount, 2) : '' }}</td>
+                        <td>FREIGHT</td>
+                        <td>{{ isset($document->data['inv_freight_amount']) ? number_format((float)$document->data['inv_freight_amount'], 2) : '' }}</td>
                     </tr>
                     <tr>
                         <td>LOADING CHARGE</td>
-                        <td></td>
+                        <td>{{ isset($document->data['loading_charge']) && $document->data['loading_charge'] > 0 ? number_format((float)$document->data['loading_charge'], 2) : '' }}</td>
                     </tr>
                     <tr>
                         <td>UNLOADING CHARGE</td>
-                        <td></td>
+                        <td>{{ isset($document->data['unloading_charge']) && $document->data['unloading_charge'] > 0 ? number_format((float)$document->data['unloading_charge'], 2) : '' }}</td>
                     </tr>
                     <tr>
                         <td>SUB TOTAL</td>
-                        <td></td>
+                        <td>{{ isset($document->data['sub_total']) ? number_format((float)$document->data['sub_total'], 2) : '' }}</td>
                     </tr>
                     <tr>
-                        <td>SGST%</td>
-                        <td></td>
+                        <td>SGST {{ isset($document->data['sgst_percent']) && $document->data['sgst_percent'] > 0 ? $document->data['sgst_percent'] . '%' : '' }}</td>
+                        <td>{{ isset($document->data['sgst_amount']) && $document->data['sgst_amount'] > 0 ? number_format((float)$document->data['sgst_amount'], 2) : '' }}</td>
                     </tr>
                     <tr>
-                        <td>CGST%</td>
-                        <td></td>
+                        <td>CGST {{ isset($document->data['cgst_percent']) && $document->data['cgst_percent'] > 0 ? $document->data['cgst_percent'] . '%' : '' }}</td>
+                        <td>{{ isset($document->data['cgst_amount']) && $document->data['cgst_amount'] > 0 ? number_format((float)$document->data['cgst_amount'], 2) : '' }}</td>
                     </tr>
                     <tr>
                         <td>GRAND TOTAL</td>
-                        <td></td>
+                        <td>{{ isset($document->data['grand_total']) ? number_format((float)$document->data['grand_total'], 2) : '' }}</td>
                     </tr>
                 </table>
             </div>
@@ -490,23 +490,23 @@
                 <div class="addr-fields">
                     <div class="addr-row">
                         <div class="key">NAME : M/S</div>
-                        <div class="val">{{ isset($trip->party) ? $trip->party->name : ($trip->party_name ?? '') }}</div>
+                        <div class="val">{{ $document->data['bill_to_name'] ?? (isset($trip->party) ? $trip->party->name : ($trip->party_name ?? '')) }}</div>
                     </div>
                     <div class="addr-row textarea-row">
                         <div class="key">ADDRESS</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['bill_to_address'] ?? '' }}</div>
                     </div>
                     <div class="addr-row" style="margin-top: 10px;">
                         <div class="key">GST NO.</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['bill_to_gst'] ?? '' }}</div>
                     </div>
                     <div class="addr-row">
                         <div class="key">CITY | STATE</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['bill_to_city_state'] ?? '' }}</div>
                     </div>
                     <div class="addr-row">
                         <div class="key">PIN CODE</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['bill_to_pin'] ?? '' }}</div>
                     </div>
                 </div>
             </div>
@@ -517,27 +517,27 @@
                 <div class="addr-fields">
                     <div class="addr-row">
                         <div class="key">NAME : M/S</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['bill_from_name'] ?? 'N B LOGISTICS' }}</div>
                     </div>
                     <div class="addr-row textarea-row">
                         <div class="key">ADDRESS</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['bill_from_address'] ?? '' }}</div>
                     </div>
                     <div class="addr-row" style="margin-top: 10px;">
                         <div class="key">GST NO.</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['bill_from_gst'] ?? '' }}</div>
                     </div>
                     <div class="addr-row">
                         <div class="key">CITY | STATE</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['bill_from_city_state'] ?? '' }}</div>
                     </div>
                     <div class="addr-row">
                         <div class="key">PIN CODE</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['bill_from_pin'] ?? '' }}</div>
                     </div>
                     <div class="addr-row">
                         <div class="key">MOBILE NO.</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['bill_from_mobile'] ?? '' }}</div>
                     </div>
                 </div>
             </div>
@@ -548,27 +548,27 @@
                 <div class="addr-fields">
                     <div class="addr-row">
                         <div class="key">NAME : M/S</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['ship_to_name'] ?? '' }}</div>
                     </div>
                     <div class="addr-row textarea-row">
                         <div class="key">ADDRESS</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['ship_to_address'] ?? '' }}</div>
                     </div>
                     <div class="addr-row" style="margin-top: 10px;">
                         <div class="key">GST NO.</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['ship_to_gst'] ?? '' }}</div>
                     </div>
                     <div class="addr-row">
                         <div class="key">CITY | STATE</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['ship_to_city_state'] ?? '' }}</div>
                     </div>
                     <div class="addr-row">
                         <div class="key">PIN CODE</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['ship_to_pin'] ?? '' }}</div>
                     </div>
                     <div class="addr-row">
                         <div class="key">MOBILE NO.</div>
-                        <div class="val"></div>
+                        <div class="val">{{ $document->data['ship_to_mobile'] ?? '' }}</div>
                     </div>
                 </div>
             </div>
@@ -579,7 +579,7 @@
             <div class="bottom-left">
                 <div class="desc-row" style="flex: 1;">
                     DESCRIPTION OF GOODS
-                    <div style="font-weight: normal; margin-top: 5px;">{{ $trip->material_name ?? '' }}</div>
+                    <div style="font-weight: normal; margin-top: 5px;">{{ $document->data['inv_description_of_goods'] ?? ($trip->material_name ?? '') }}</div>
                 </div>
                 <div class="desc-row" style="height: 45px;">
                     TOTAL FREIGHT IN WORDS
@@ -587,26 +587,26 @@
                 </div>
                 <div class="desc-row" style="height: 35px; flex-direction: row; align-items: center;">
                     <span style="margin-right: 20px;">REMARK</span>
-                    <span style="font-weight: normal;">{{ $trip->notes ?? '' }}</span>
+                    <span style="font-weight: normal;">{{ $document->data['inv_remark'] ?? ($trip->notes ?? '') }}</span>
                 </div>
             </div>
             <div class="bottom-right">
                 <table class="payment-table">
                     <tr>
                         <td>PAYMENT PAID BY</td>
-                        <td></td>
+                        <td>{{ $document->data['payment_paid_by'] ?? '' }}</td>
                     </tr>
                     <tr>
                         <td>E-WAY BILL NO.</td>
-                        <td></td>
+                        <td>{{ $document->data['inv_eway_bill_no'] ?? '' }}</td>
                     </tr>
                     <tr>
                         <td>NO. OF ARTICLES</td>
-                        <td>{{ $trip->number_of_packages ?? '' }}</td>
+                        <td>{{ $document->data['inv_no_of_articles'] ?? ($trip->number_of_packages ?? '') }}</td>
                     </tr>
                     <tr>
                         <td>TOTAL WEIGHT</td>
-                        <td>{{ $trip->actual_weight ?? '' }}</td>
+                        <td>{{ $document->data['inv_total_weight'] ?? ($trip->actual_weight ?? '') }}</td>
                     </tr>
                 </table>
             </div>

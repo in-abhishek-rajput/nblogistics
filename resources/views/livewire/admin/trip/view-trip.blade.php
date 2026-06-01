@@ -332,7 +332,7 @@
                         @endif
 
                         <div class="col-md-6 col-6">
-                            <a href="{{ route('invoices.show', $trip->id) }}" target="_blank" class="btn btn-primary w-100">
+                            <a href="{{ route('trip.documents', ['tripId' => $trip->id, 'step' => 2]) }}" class="btn btn-primary w-100">
                                 <i class="bi bi-receipt me-1"></i> View Bill
                             </a>
                         </div>
@@ -828,16 +828,32 @@
             </div>
         </div>{{-- /trip profit --}}
 
-        {{-- ── Documents (LR + POD) ── --}}
+        {{-- ── Documents (LR + Invoice + Receipt + POD) ── --}}
         <div class="bg-light p-3 shadow-sm">
             <h6>{{ $trip->party->name ?? 'N/A' }}</h6>
 
             <div class="border rounded-2 p-2 d-space-b mb-2">
                 <div class="d-row-set text-dark f-14">
-                    <i class="bi bi-list"></i>
+                    <i class="bi bi-file-text"></i>
                     <b>Online Bilty/LR</b>
                 </div>
-                <a href="{{ route('builty.show', $trip->id) }}" target="_blank" class="btn btn-sm btn-success">Create LR</a>
+                <a href="{{ route('trip.documents', ['tripId' => $trip->id, 'step' => 1]) }}" class="btn btn-sm btn-success">Create LR</a>
+            </div>
+
+            <div class="border rounded-2 p-2 d-space-b mb-2">
+                <div class="d-row-set text-dark f-14">
+                    <i class="bi bi-receipt"></i>
+                    <b>Tax Invoice</b>
+                </div>
+                <a href="{{ route('trip.documents', ['tripId' => $trip->id, 'step' => 2]) }}" class="btn btn-sm btn-primary">Create Bill</a>
+            </div>
+
+            <div class="border rounded-2 p-2 d-space-b mb-2">
+                <div class="d-row-set text-dark f-14">
+                    <i class="bi bi-cash-stack"></i>
+                    <b>Money Receipt</b>
+                </div>
+                <a href="{{ route('trip.documents', ['tripId' => $trip->id, 'step' => 3]) }}" class="btn btn-sm btn-warning">Create Receipt</a>
             </div>
 
             <div class="border rounded-2 p-2 d-space-b">
@@ -845,7 +861,7 @@
                     <i class="bi bi-list"></i>
                     <b>POD Challan</b>
                 </div>
-                <a href="#" class="btn btn-sm btn-primary">
+                <a href="#" class="btn btn-sm btn-secondary">
                     <i class="bi bi-camera-fill me-1"></i>Add POD
                 </a>
             </div>

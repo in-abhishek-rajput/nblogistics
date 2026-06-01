@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class InvoicesController extends Controller
+class ReceiptController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -32,13 +32,13 @@ class InvoicesController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified resource (printable Money Receipt).
      */
     public function show(string $id)
     {
-        $trip = \App\Models\Trip::find($id);
-        $document = \App\Models\TripDocument::invoice()->where('trip_id', $id)->first();
-        return view('admin.bill.template', compact('trip', 'document'));
+        $trip = \App\Models\Trip::with(['party', 'advances'])->find($id);
+        $document = \App\Models\TripDocument::receipt()->where('trip_id', $id)->first();
+        return view('admin.receipt.template', compact('trip', 'document'));
     }
 
     /**

@@ -184,7 +184,12 @@ class Trip extends Model
      */
     public function expenses(): HasMany
     {
-        return $this->hasMany(TripExpense::class);
+        return $this->hasMany(TripExpense::class, 'trip_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(TripDocument::class, 'trip_id');
     }
 
     /**
