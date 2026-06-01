@@ -13,15 +13,12 @@ use Maatwebsite\Excel\Concerns\WithStyles;
 
 class TrucksReport extends Component
 {
-    // Filter properties
     public int $month;
     public int $year;
 
-    // Report data
     public $trucks;
     public $summary = [];
 
-    // Mount component - set default month/year
     public function mount()
     {
         $this->month = Carbon::now()->month;
@@ -29,7 +26,6 @@ class TrucksReport extends Component
         $this->fetchData();
     }
 
-    // Refresh data when filters change
     public function updatedMonth()
     {
         $this->fetchData();
@@ -40,10 +36,8 @@ class TrucksReport extends Component
         $this->fetchData();
     }
 
-    // Fetch and process report data
     public function fetchData()
     {
-        // Get trucks with their trips for the selected month/year
         $this->trucks = Truck::with(['driver'])
             ->withCount(['trips' => function ($query) {
                 $query->whereMonth('start_date', $this->month)
@@ -56,77 +50,83 @@ class TrucksReport extends Component
             ->orderBy('truck_number')
             ->get();
 
-        // Calculate summary
         $this->calculateSummary();
     }
 
-    // Calculate all required metrics
     public function calculateSummary()
     {
         $trucks = $this->trucks;
 
-        // Get all trips for the month/year for calculations
         $tripsForMonth = Trip::whereMonth('start_date', $this->month)
             ->whereYear('start_date', $this->year)
             ->get();
 
-        // Basic counts
         $totalTrucks = $trucks->count();
         $activeTrucks = $trucks->where('status', 'available')->count();
         $trucksUsedInTrips = $trucks->where('trips_count', '>', 0)->count();
         $idleTrucks = $totalTrucks - $trucksUsedInTrips;
 
-        // Truck-wise calculations
         $truckPerformance = $trucks->map(function ($truck) use ($tripsForMonth) {
             $truckTrips = $tripsForMonth->where('truck_id', $truck->id);
-            
-            // Income from trips
+            $tripIds = $truckTrips->pluck('id')->toArray();
+
             $income = $truckTrips->sum('freight_amount');
-            
-            // Expenses for this truck (from trip_expenses where truck_id matches)
-            $expenses = TripExpense::where('truck_id', $truck->id)
-                ->whereIn('trip_id', $truckTrips->pluck('id')->toArray())
-                ->sum('amount');
-            
-            // Maintenance expenses (truck expenses not tied to specific trips)
+
+            $expenses = !empty($tripIds)
+                ? TripExpense::where('truck_id', $truck->id)->whereIn('trip_id', $tripIds)->sum('amount')
+                : 0;
+
             $maintenanceExpenses = TripExpense::where('truck_id', $truck->id)
                 ->whereNull('trip_id')
+                ->whereMonth('expense_date', $this->month)
+                ->whereYear('expense_date', $this->year)
                 ->sum('amount');
-            
+
             $profit = $income - $expenses - $maintenanceExpenses;
+            $tripCount = $truckTrips->count();
+            $completedTrips = $truckTrips->whereIn('status', ['completed', 'pod_received', 'pod_submitted', 'settled'])->count();
+            $totalKm = $truckTrips->sum(function ($trip) {
+                if ($trip->start_km === null || $trip->end_km === null) {
+                    return 0;
+                }
+
+                return max(0, (int) $trip->end_km - (int) $trip->start_km);
+            });
 
             return [
                 'id' => $truck->id,
                 'truck_number' => $truck->truck_number,
                 'truck_type' => $truck->truck_type,
+                'ownership' => $truck->ownership,
+                'status' => ucwords(str_replace('_', ' ', $truck->status ?? '-')),
                 'driver_name' => $truck->driver?->name ?? 'Not Assigned',
-                'trips_count' => $truckTrips->count(),
+                'trips_count' => $tripCount,
+                'completed_trips' => $completedTrips,
+                'ongoing_trips' => $truckTrips->whereIn('status', ['pending', 'start'])->count(),
+                'cancelled_trips' => $truckTrips->where('status', 'cancelled')->count(),
+                'total_km' => $totalKm,
                 'income' => round($income, 2),
                 'expenses' => round($expenses, 2),
                 'maintenance_expenses' => round($maintenanceExpenses, 2),
                 'profit' => round($profit, 2),
-                'utilization' => $truckTrips->count() > 0 ? 
-                    (($truckTrips->whereIn('status', ['completed', 'pod_received', 'pod_submitted', 'settled'])->count() / $truckTrips->count()) * 100) : 0,
+                'avg_profit_per_trip' => $tripCount > 0 ? round($profit / $tripCount, 2) : 0,
+                'expense_per_trip' => $tripCount > 0 ? round(($expenses + $maintenanceExpenses) / $tripCount, 2) : 0,
+                'utilization' => $tripCount > 0 ? round(($completedTrips / $tripCount) * 100, 2) : 0,
             ];
         });
 
-        // Top earning truck
-        $topEarningTruck = null;
-        if ($truckPerformance->isNotEmpty()) {
-            $topEarningTruck = $truckPerformance->sortByDesc('income')->first();
-        }
+        $topEarningTruck = $truckPerformance->isNotEmpty()
+            ? $truckPerformance->sortByDesc('income')->first()
+            : null;
 
-        // Utilization overview
         $utilizationOverview = [
             'total_trucks' => $totalTrucks,
             'active_trucks' => $activeTrucks,
             'used_trucks' => $trucksUsedInTrips,
             'idle_trucks' => $idleTrucks,
-            'utilization_percentage' => $totalTrucks > 0 ? 
-                round(($trucksUsedInTrips / $totalTrucks) * 100, 2) : 0,
+            'utilization_percentage' => $totalTrucks > 0 ? round(($trucksUsedInTrips / $totalTrucks) * 100, 2) : 0,
         ];
 
-        // Store summary
         $this->summary = [
             'total_trucks' => $totalTrucks,
             'active_trucks' => $activeTrucks,
@@ -138,13 +138,11 @@ class TrucksReport extends Component
         ];
     }
 
-    // Print functionality
     public function printReport()
     {
         $this->dispatch('printReport');
     }
 
-    // Export report data
     public function exportReport()
     {
         $data = [];
@@ -152,12 +150,20 @@ class TrucksReport extends Component
             $data[] = [
                 $truck['truck_number'],
                 $truck['truck_type'],
+                $truck['ownership'],
+                $truck['status'],
                 $truck['driver_name'],
                 $truck['trips_count'],
+                $truck['completed_trips'],
+                $truck['ongoing_trips'],
+                $truck['cancelled_trips'],
+                $truck['total_km'],
                 $truck['income'],
                 $truck['expenses'],
                 $truck['maintenance_expenses'],
                 $truck['profit'],
+                $truck['avg_profit_per_trip'],
+                $truck['expense_per_trip'],
                 $truck['utilization'] . '%',
             ];
         }
@@ -178,38 +184,29 @@ class TrucksReport extends Component
             public function headings(): array
             {
                 return [
-                    'Truck Number',
-                    'Type',
-                    'Assigned Driver',
-                    'Trips Count',
-                    'Income',
-                    'Expenses',
-                    'Maintenance',
-                    'Profit',
-                    'Utilization %'
+                    'Truck Number', 'Type', 'Ownership', 'Status', 'Assigned Driver',
+                    'Trips Count', 'Completed Trips', 'Ongoing Trips', 'Cancelled Trips',
+                    'Total KM', 'Income', 'Expenses', 'Maintenance', 'Profit',
+                    'Avg Profit/Trip', 'Expense/Trip', 'Utilization %',
                 ];
             }
 
             public function styles($sheet)
             {
-                // Make heading bold
                 $sheet->getStyle('1:1')->getFont()->setBold(true);
-                // Auto size columns
                 foreach ($sheet->getColumnIterator() as $column) {
-                    $sheet->getColumnDimension($column->getColumnIndex())
-                        ->setAutoSize(true);
+                    $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
                 }
             }
         }, 'trucks-report.xlsx');
     }
 
-    // Helper methods for dropdowns
     public function getMonths()
     {
         return [
             1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
             5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
-            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December',
         ];
     }
 
@@ -230,11 +227,11 @@ class TrucksReport extends Component
         $currentYear = Carbon::now()->year;
 
         return view('livewire.admin.reports.trucks-report', [
-            'monthNames'     => $monthNames,
-            'years'          => range($currentYear - 5, $currentYear + 5),
-            'selectedMonth'  => $this->month,
-            'selectedYear'   => $this->year,
-            'summary'        => $this->summary,
+            'monthNames' => $monthNames,
+            'years' => range($currentYear - 5, $currentYear + 5),
+            'selectedMonth' => $this->month,
+            'selectedYear' => $this->year,
+            'summary' => $this->summary,
         ]);
     }
 }
