@@ -12,14 +12,11 @@ use Maatwebsite\Excel\Concerns\WithStyles;
 
 class TripsReport extends Component
 {
-    // ── Filter Properties (bound to blade selects via wire:model.live) ──
     public int $month;
     public int $year;
 
-    // ── Report Data ──
     public array $summary = [];
 
-    // ── On component load: set defaults and fetch data ──
     public function mount(): void
     {
         $this->month = (int) Carbon::now()->month;
@@ -27,53 +24,49 @@ class TripsReport extends Component
         $this->fetchData();
     }
 
-    // ── Re-fetch when month filter changes ──
     public function updatedMonth(): void
     {
         $this->fetchData();
     }
 
-    // ── Re-fetch when year filter changes ──
     public function updatedYear(): void
     {
         $this->fetchData();
     }
 
-    // ── Fetch trips from DB and calculate summary ──
     public function fetchData(): void
     {
-        // Single query with eager-loaded relationships to avoid N+1
-        $trips = Trip::with(['party', 'truck', 'driver', 'expenses'])
+        $trips = Trip::with(['party', 'truck', 'driver', 'expenses', 'advances', 'charges', 'payments'])
             ->whereMonth('start_date', $this->month)
             ->whereYear('start_date', $this->year)
             ->orderBy('start_date', 'desc')
             ->get();
 
-        // ── Status counts ──
         $totalTrips = $trips->count();
         $completedTrips = $trips->whereIn('status', ['completed', 'pod_received', 'pod_submitted', 'settled'])->count();
         $ongoingTrips = $trips->whereIn('status', ['pending', 'start'])->count();
         $cancelledTrips = $trips->where('status', 'cancelled')->count();
 
-        // ── Financial totals ──
         $totalFreight = $trips->sum('freight_amount');
+        $totalAdvances = $trips->sum(fn($trip) => $trip->advances->sum('amount'));
+        $totalPayments = $trips->sum(fn($trip) => $trip->payments->sum('amount'));
+        $totalAdditionalCharges = $trips->sum(fn($trip) => $trip->charges->where('charge_direction', 'add_to_bill')->sum('amount'));
+        $totalDeductions = $trips->sum(fn($trip) => $trip->charges->where('charge_direction', 'reduce_from_bill')->sum('amount'));
+        $totalPendingFreight = $trips->sum('pending_freight_amount');
         $totalExpenses = 0;
         $expenseBreakdown = [];
 
         $tripIds = $trips->pluck('id')->toArray();
 
         if (!empty($tripIds)) {
-            $expenses = TripExpense::whereIn('trip_id', $tripIds)
-                ->get();
-
+            $expenses = TripExpense::whereIn('trip_id', $tripIds)->get();
             $totalExpenses = $expenses->sum('amount');
 
-            // Group expenses by type for breakdown table
             $expenseBreakdown = $expenses
-                ->filter(fn($e) => !empty($e->expense_type))
+                ->filter(fn($expense) => !empty($expense->expense_type))
                 ->groupBy('expense_type')
                 ->mapWithKeys(fn($group) => [
-                    $group->first()->expense_type => $group->sum('amount')
+                    $group->first()->expense_type => $group->sum('amount'),
                 ])
                 ->toArray();
         }
@@ -81,10 +74,9 @@ class TripsReport extends Component
         $profitLoss = $totalFreight - $totalExpenses;
         $averageTripProfit = $totalTrips > 0 ? round($profitLoss / $totalTrips, 2) : 0;
 
-        // ── Top route by trip count ──
         $topRoute = $trips
-            ->filter(fn($t) => $t->origin && $t->destination)
-            ->groupBy(fn($t) => $t->origin . '|' . $t->destination)
+            ->filter(fn($trip) => $trip->origin && $trip->destination)
+            ->groupBy(fn($trip) => $trip->origin . '|' . $trip->destination)
             ->map(fn($group) => [
                 'origin' => $group->first()->origin,
                 'destination' => $group->first()->destination,
@@ -93,31 +85,55 @@ class TripsReport extends Component
             ->sortByDesc('trip_count')
             ->first();
 
-        // ── Per-trip rows for overview table ──
         $tripRows = $trips->map(function ($trip) {
             $tripExpenses = $trip->expenses->sum('amount');
+            $additionalCharges = $trip->charges->where('charge_direction', 'add_to_bill')->sum('amount');
+            $deductions = $trip->charges->where('charge_direction', 'reduce_from_bill')->sum('amount');
+            $netCharges = $additionalCharges - $deductions;
+            $totalKm = ($trip->start_km !== null && $trip->end_km !== null)
+                ? max(0, (int) $trip->end_km - (int) $trip->start_km)
+                : null;
 
             return [
-                'date' => $trip->start_date->format('d M Y'),
-                'party' => $trip->party?->name ?? $trip->party_name ?? '—',
-                'truck' => $trip->truck?->truck_number ?? $trip->truck_name ?? '—',
-                'driver' => $trip->driver?->name ?? $trip->driver_name ?? '—',
-                'origin' => $trip->origin ?? '—',
-                'destination' => $trip->destination ?? '—',
+                'lr_number' => $trip->lr_number ?? '-',
+                'date' => $trip->start_date?->format('d M Y') ?? '-',
+                'party' => $trip->party?->name ?? $trip->party_name ?? '-',
+                'truck' => $trip->truck?->truck_number ?? $trip->truck_name ?? '-',
+                'driver' => $trip->driver?->name ?? $trip->driver_name ?? '-',
+                'origin' => $trip->origin ?? '-',
+                'destination' => $trip->destination ?? '-',
+                'material_name' => $trip->material_name ?? '-',
+                'billing_type' => ucwords(str_replace('_', ' ', $trip->billing_type ?? '-')),
+                'unit' => $trip->unit,
+                'per_unit_amount' => $trip->per_unit_amount,
                 'freight_amount' => $trip->freight_amount,
+                'advances' => $trip->advances->sum('amount'),
+                'payments' => $trip->payments->sum('amount'),
+                'additional_charges' => $additionalCharges,
+                'deductions' => $deductions,
+                'net_charges' => $netCharges,
                 'expenses' => $tripExpenses,
                 'profit' => $trip->freight_amount - $tripExpenses,
+                'pending_freight_amount' => $trip->pending_freight_amount ?? 0,
+                'start_km' => $trip->start_km,
+                'end_km' => $trip->end_km,
+                'total_km' => $totalKm,
                 'status' => $trip->status,
             ];
         })->values()->toArray();
 
-        // ── Store everything in summary array ──
         $this->summary = [
             'total_trips' => $totalTrips,
             'completed_trips' => $completedTrips,
             'ongoing_trips' => $ongoingTrips,
             'cancelled_trips' => $cancelledTrips,
             'total_freight' => $totalFreight,
+            'total_advances' => $totalAdvances,
+            'total_payments' => $totalPayments,
+            'total_additional_charges' => $totalAdditionalCharges,
+            'total_deductions' => $totalDeductions,
+            'total_net_charges' => $totalAdditionalCharges - $totalDeductions,
+            'total_pending_freight' => $totalPendingFreight,
             'total_expenses' => $totalExpenses,
             'profit_loss' => $profitLoss,
             'average_trip_profit' => $averageTripProfit,
@@ -127,28 +143,40 @@ class TripsReport extends Component
         ];
     }
 
-    // ── Dispatch browser event to trigger window.print() ──
     public function printReport(): void
     {
         $this->dispatch('printReport');
     }
 
-    // ── Export report data ──
     public function exportReport()
     {
         $data = [];
         foreach ($this->summary['trip_rows'] as $index => $trip) {
             $data[] = [
                 $index + 1,
+                $trip['lr_number'],
                 $trip['date'],
                 $trip['party'],
                 $trip['truck'],
                 $trip['driver'],
                 $trip['origin'],
                 $trip['destination'],
+                $trip['material_name'],
+                $trip['billing_type'],
+                $trip['unit'],
+                $trip['per_unit_amount'],
                 $trip['freight_amount'],
+                $trip['advances'],
+                $trip['payments'],
+                $trip['additional_charges'],
+                $trip['deductions'],
+                $trip['net_charges'],
                 $trip['expenses'],
                 $trip['profit'],
+                $trip['pending_freight_amount'],
+                $trip['start_km'],
+                $trip['end_km'],
+                $trip['total_km'],
                 ucwords(str_replace('_', ' ', $trip['status'])),
             ];
         }
@@ -169,25 +197,24 @@ class TripsReport extends Component
             public function headings(): array
             {
                 return [
-                    '#', 'Date', 'Party', 'Truck', 'Driver', 'Origin', 'Destination',
-                    'Freight (₹)', 'Expenses (₹)', 'Profit (₹)', 'Status'
+                    '#', 'LR Number', 'Date', 'Party', 'Truck', 'Driver', 'Origin', 'Destination',
+                    'Material', 'Billing Type', 'Unit', 'Per Unit Amount',
+                    'Freight (Rs)', 'Advances (Rs)', 'Payments (Rs)', 'Add Charges (Rs)',
+                    'Deductions (Rs)', 'Net Charges (Rs)', 'Expenses (Rs)', 'Profit (Rs)',
+                    'Pending Freight (Rs)', 'Start KM', 'End KM', 'Total KM', 'Status',
                 ];
             }
 
             public function styles($sheet)
             {
-                // Make heading bold
                 $sheet->getStyle('1:1')->getFont()->setBold(true);
-                // Auto size columns
                 foreach ($sheet->getColumnIterator() as $column) {
-                    $sheet->getColumnDimension($column->getColumnIndex())
-                        ->setAutoSize(true);
+                    $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
                 }
             }
         }, 'trips-report.xlsx');
     }
 
-    // ── Pass ALL required variables explicitly to blade ──
     public function render()
     {
         $monthNames = [

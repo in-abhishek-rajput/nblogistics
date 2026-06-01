@@ -302,15 +302,23 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th class="ps-3">#</th>
+                                    <th>LR</th>
                                     <th>Date</th>
                                     <th>Party</th>
                                     <th>Truck</th>
                                     <th>Driver</th>
                                     <th>Origin</th>
                                     <th>Destination</th>
+                                    <th>Material</th>
+                                    <th>Billing</th>
                                     <th class="text-end">Freight (₹)</th>
+                                    <th class="text-end">Advances</th>
+                                    <th class="text-end">Payments</th>
+                                    <th class="text-end">Net Charges</th>
                                     <th class="text-end">Expenses (₹)</th>
                                     <th class="text-end">Profit (₹)</th>
+                                    <th class="text-end">Pending</th>
+                                    <th class="text-end">KM</th>
                                     <th class="text-center">Status</th>
                                 </tr>
                             </thead>
@@ -318,20 +326,38 @@
                                 @foreach($summary['trip_rows'] as $i => $trip)
                                     <tr class="{{ $trip['profit'] < 0 ? 'table-danger' : '' }}">
                                         <td class="ps-3 text-muted">{{ $i + 1 }}</td>
+                                        <td>{{ $trip['lr_number'] }}</td>
                                         <td class="text-nowrap">{{ $trip['date'] }}</td>
                                         <td>{{ $trip['party'] }}</td>
                                         <td>{{ $trip['truck'] }}</td>
                                         <td>{{ $trip['driver'] }}</td>
                                         <td>{{ $trip['origin'] }}</td>
                                         <td>{{ $trip['destination'] }}</td>
+                                        <td>{{ $trip['material_name'] }}</td>
+                                        <td>{{ $trip['billing_type'] }}</td>
                                         <td class="text-end text-info fw-semibold">
                                             {{ number_format($trip['freight_amount'], 2) }}
+                                        </td>
+                                        <td class="text-end">
+                                            {{ number_format($trip['advances'], 2) }}
+                                        </td>
+                                        <td class="text-end">
+                                            {{ number_format($trip['payments'], 2) }}
+                                        </td>
+                                        <td class="text-end">
+                                            {{ number_format($trip['net_charges'], 2) }}
                                         </td>
                                         <td class="text-end text-secondary">
                                             {{ number_format($trip['expenses'], 2) }}
                                         </td>
                                         <td class="text-end fw-bold {{ $trip['profit'] >= 0 ? 'text-success' : 'text-danger' }}">
                                             {{ number_format($trip['profit'], 2) }}
+                                        </td>
+                                        <td class="text-end">
+                                            {{ number_format($trip['pending_freight_amount'], 2) }}
+                                        </td>
+                                        <td class="text-end">
+                                            {{ $trip['total_km'] !== null ? number_format($trip['total_km']) : '-' }}
                                         </td>
                                         <td class="text-center">
                                             @php
@@ -354,9 +380,18 @@
                             {{-- Totals footer row --}}
                             <tfoot class="table-secondary fw-bold">
                                 <tr>
-                                    <td colspan="7" class="ps-3">Totals</td>
+                                    <td colspan="10" class="ps-3">Totals</td>
                                     <td class="text-end text-info">
                                         ₹{{ number_format($summary['total_freight'], 2) }}
+                                    </td>
+                                    <td class="text-end">
+                                        ₹{{ number_format($summary['total_advances'] ?? 0, 2) }}
+                                    </td>
+                                    <td class="text-end">
+                                        ₹{{ number_format($summary['total_payments'] ?? 0, 2) }}
+                                    </td>
+                                    <td class="text-end">
+                                        ₹{{ number_format($summary['total_net_charges'] ?? 0, 2) }}
                                     </td>
                                     <td class="text-end text-secondary">
                                         ₹{{ number_format($summary['total_expenses'], 2) }}
@@ -364,6 +399,10 @@
                                     <td class="text-end {{ $summary['profit_loss'] >= 0 ? 'text-success' : 'text-danger' }}">
                                         ₹{{ number_format($summary['profit_loss'], 2) }}
                                     </td>
+                                    <td class="text-end">
+                                        ₹{{ number_format($summary['total_pending_freight'] ?? 0, 2) }}
+                                    </td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                             </tfoot>

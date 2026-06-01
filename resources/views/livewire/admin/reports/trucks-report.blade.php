@@ -236,12 +236,20 @@
                                 <tr>
                                     <th>Truck Number</th>
                                     <th>Type</th>
+                                    <th>Ownership</th>
+                                    <th>Status</th>
                                     <th>Assigned Driver</th>
                                     <th>Trips Count</th>
+                                    <th>Completed</th>
+                                    <th>Ongoing</th>
+                                    <th>Cancelled</th>
+                                    <th>Total KM</th>
                                     <th>Income</th>
                                     <th>Expenses</th>
                                     <th>Maintenance</th>
                                     <th>Profit</th>
+                                    <th>Avg Profit/Trip</th>
+                                    <th>Expense/Trip</th>
                                     <th>Utilization %</th>
                                 </tr>
                             </thead>
@@ -250,12 +258,20 @@
                                     <tr>
                                         <td>{{ $truck['truck_number'] ?? '—' }}</td>
                                         <td>{{ $truck['truck_type'] ?? '—' }}</td>
+                                        <td>{{ $truck['ownership'] ?? '-' }}</td>
+                                        <td>{{ $truck['status'] ?? '-' }}</td>
                                         <td>{{ $truck['driver_name'] ?? '—' }}</td>
                                         <td>{{ $truck['trips_count'] ?? 0 }}</td>
+                                        <td>{{ $truck['completed_trips'] ?? 0 }}</td>
+                                        <td>{{ $truck['ongoing_trips'] ?? 0 }}</td>
+                                        <td>{{ $truck['cancelled_trips'] ?? 0 }}</td>
+                                        <td>{{ number_format($truck['total_km'] ?? 0) }}</td>
                                         <td>₹{{ number_format($truck['income'] ?? 0, 2) }}</td>
                                         <td>₹{{ number_format($truck['expenses'] ?? 0, 2) }}</td>
                                         <td>₹{{ number_format($truck['maintenance_expenses'] ?? 0, 2) }}</td>
                                         <td>₹{{ number_format($truck['profit'] ?? 0, 2) }}</td>
+                                        <td>₹{{ number_format($truck['avg_profit_per_trip'] ?? 0, 2) }}</td>
+                                        <td>₹{{ number_format($truck['expense_per_trip'] ?? 0, 2) }}</td>
                                         <td>{{ number_format($truck['utilization'] ?? 0, 2) }}%</td>
                                     </tr>
                                 @endforeach
