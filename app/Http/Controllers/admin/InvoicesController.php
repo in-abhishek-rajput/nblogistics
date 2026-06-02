@@ -3,63 +3,77 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Trip;
+use App\Models\TripDocument;
 use Illuminate\Http\Request;
 
 class InvoicesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        return view('admin.invoice.list');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        if (!request()->filled('trip_id')) {
+            return redirect()->route('trips.index');
+        }
+
+        return view('admin.trip.documents', [
+            'tripId' => (int) request('trip_id', 0),
+            'step' => 2,
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         //
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-        $trip = \App\Models\Trip::find($id);
-        $document = \App\Models\TripDocument::invoice()->where('trip_id', $id)->first();
+        $trip = Trip::with(['party', 'truck', 'driver', 'advances'])->findOrFail($id);
+        $document = TripDocument::invoice()->where('trip_id', $id)->first() ?? new TripDocument(['data' => []]);
+
         return view('admin.bill.template', compact('trip', 'document'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
-        //
+        if (!$id) {
+            return redirect()->route('trips.index');
+        }
+
+        return view('admin.trip.documents', [
+            'tripId' => (int) $id,
+            'step' => 2,
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    public function print(string $id)
+    {
+        return $this->show($id);
+    }
+
+    public function download(string $id)
+    {
+        $trip = Trip::with(['party', 'truck', 'driver', 'advances'])->findOrFail($id);
+        $document = TripDocument::invoice()->where('trip_id', $id)->first() ?? new TripDocument(['data' => []]);
+
+        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            return \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.bill.template', compact('trip', 'document'))
+                ->download(($document->document_number ?? 'invoice') . '.pdf');
+        }
+
+        return view('admin.bill.template', compact('trip', 'document'));
+    }
+
     public function destroy(string $id)
     {
         //

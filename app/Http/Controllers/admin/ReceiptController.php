@@ -37,7 +37,7 @@ class ReceiptController extends Controller
     public function show(string $id)
     {
         $trip = \App\Models\Trip::with(['party', 'advances'])->find($id);
-        $document = \App\Models\TripDocument::receipt()->where('trip_id', $id)->first();
+        $document = \App\Models\TripDocument::receipt()->where('trip_id', $id)->first() ?? new \App\Models\TripDocument(['data' => []]);
         return view('admin.receipt.template', compact('trip', 'document'));
     }
 

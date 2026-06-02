@@ -192,6 +192,16 @@ class Trip extends Model
         return $this->hasMany(TripDocument::class, 'trip_id');
     }
 
+    public function invoiceDocument(): HasMany
+    {
+        return $this->documents()->where('document_type', 'invoice');
+    }
+
+    public function biltyDocument(): HasMany
+    {
+        return $this->documents()->where('document_type', 'bilty');
+    }
+
     /**
      * Boot method to handle status synchronization.
      * Automatically updates driver and truck statuses based on trip status.

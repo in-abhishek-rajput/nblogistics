@@ -22,7 +22,7 @@
             <a href="{{ route('trucks.index') }}" class="nav-item nav-link {{ request()->routeIs('trucks.*') ? 'active' : '' }}"><i class="fa fa-truck me-2"></i>Trucks</a>
             <a href="{{ route('trip-expenses') }}" class="nav-item nav-link {{ request()->routeIs('trip-expenses.*') ? 'active' : '' }}"><i class="fa fa-receipt me-2"></i>Expenses</a>
             <a href="{{ route('invoices.index') }}" class="nav-item nav-link {{ request()->routeIs('invoices.*') ? 'active' : '' }}"><i class="fa fa-file-invoice me-2"></i>Invoices</a>
-            <a href="{{ route('builty.index') }}" class="nav-item nav-link {{ request()->routeIs('builty.*') ? 'active' : '' }}"><i class="fa fa-list me-2"></i>Builty</a>
+            <a href="{{ route('builty.index') }}" class="nav-item nav-link {{ request()->routeIs('builty.*') ? 'active' : '' }}"><i class="fa fa-list me-2"></i>Bilty</a>
             <div class="dropdown dropstart">
                 <a href="#" class="nav-item nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" data-bs-toggle="dropdown"><i class="fa fa-file me-2"></i>Reports</a>
                 <ul class="dropdown-menu">
