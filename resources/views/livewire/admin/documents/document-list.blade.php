@@ -117,7 +117,6 @@
                                     <li><a class="dropdown-item" href="{{ route($routeName . '.show', $document->trip_id) }}" target="_blank"><i class="bi bi-eye me-2"></i>View</a></li>
                                     <li><a class="dropdown-item" href="{{ route('trip.documents', ['tripId' => $document->trip_id, 'step' => $documentType === 'invoice' ? 2 : 1]) }}"><i class="bi bi-pencil me-2"></i>Edit</a></li>
                                     <li><a class="dropdown-item" href="{{ route($routeName . '.print', $document->trip_id) }}" target="_blank"><i class="bi bi-printer me-2"></i>Print</a></li>
-                                    <li><a class="dropdown-item" href="{{ route($routeName . '.download', $document->trip_id) }}" target="_blank"><i class="bi bi-download me-2"></i>Download PDF</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     @foreach (array_keys($statuses) as $statusKey)
                                         @if ($statusKey !== $document->status)
