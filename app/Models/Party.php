@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Party extends Model
 {
+    use SoftDeletes;
     /**
      * The attributes that are mass assignable.
      * These fields can be filled via mass assignment for flexibility and security.
@@ -19,6 +21,7 @@ class Party extends Model
         'status',
         'opening_balance',
         'opening_balance_date',
+        'deleted_by',
     ];
 
     /**

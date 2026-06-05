@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Truck extends Model
 {
+    use SoftDeletes;
     /**
      * The attributes that are mass assignable.
      * These fields can be filled via mass assignment for flexibility and security.
@@ -19,6 +21,7 @@ class Truck extends Model
         'ownership',
         'status',
         'driver_id',
+        'deleted_by',
     ];
 
     /**

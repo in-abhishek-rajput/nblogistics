@@ -76,7 +76,12 @@
             <tbody>
                 @forelse($drivers as $driver)
                     <tr>
-                        <td class="border">{{ $driver->name }}</td>
+                        <td class="border">
+                            {{ $driver->name }}
+                            @if($driver->trashed())
+                                <span class="badge bg-danger ms-2">Deleted</span>
+                            @endif
+                        </td>
                         <td class="border">{{ $driver->truck ? ($types[$driver->truck->truck_type] ?? $driver->truck->truck_type) : 'N/A' }}</td>
                         <td class="border">{{ $driver->mobile ?? 'N/A' }}</td>
                         <td class="border">
@@ -105,6 +110,13 @@
                                             <i class="bi bi-pencil me-2"></i>Edit
                                         </a>
                                     </li>
+                                    @if(!$driver->trashed())
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="#" wire:click="deleteDriver({{ $driver->id }})" wire:confirm="Are you sure you want to delete this driver?">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </a>
+                                    </li>
+                                    @endif
                                 </ul>
                             </div>
                         </td>

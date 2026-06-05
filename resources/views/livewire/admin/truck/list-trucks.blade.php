@@ -97,7 +97,12 @@
             <tbody>
                 @forelse($trucks as $truck)
                     <tr>
-                        <td class="border">{{ $truck->truck_number }}</td>
+                        <td class="border">
+                            {{ $truck->truck_number }}
+                            @if($truck->trashed())
+                                <span class="badge bg-danger ms-2">Deleted</span>
+                            @endif
+                        </td>
                         <td class="border">{{ $types[$truck->truck_type] ?? $truck->truck_type }}</td>
                         <td class="border">{{ $ownerships[$truck->ownership] ?? ucfirst($truck->ownership) }}</td>
                         <td class="border">{{ $truck->driver ? $truck->driver->name : 'N/A' }}</td>
@@ -120,6 +125,13 @@
                                             <i class="bi bi-pencil me-2"></i>Edit
                                         </a>
                                     </li>
+                                    @if(!$truck->trashed())
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="#" wire:click="deleteTruck({{ $truck->id }})" wire:confirm="Are you sure you want to delete this truck?">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </a>
+                                    </li>
+                                    @endif
                                 </ul>
                             </div>
                         </td>

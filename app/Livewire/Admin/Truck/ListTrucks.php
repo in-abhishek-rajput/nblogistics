@@ -100,10 +100,19 @@ class ListTrucks extends Component
         $this->flashMessage = $message;
     }
 
+    public function deleteTruck($id)
+    {
+        $truck = Truck::findOrFail($id);
+        $truck->update(['deleted_by' => auth()->id()]);
+        $truck->delete();
+        $this->dispatch('flashMessage', 'success', 'Truck deleted successfully.');
+    }
+
     // Computed property for trucks query - dynamic and efficient
     public function getTrucksProperty()
     {
         return Truck::query()
+            ->withTrashed()
             ->with('driver') // Eager load driver
             ->search($this->search) // Use scope for search
             ->status($this->statusFilter) // Use scope for status filter

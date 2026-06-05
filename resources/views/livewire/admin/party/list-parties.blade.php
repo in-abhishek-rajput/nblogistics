@@ -72,7 +72,12 @@
             <tbody>
                 @forelse($parties as $party)
                     <tr>
-                        <td class="border">{{ $party->name }}</td>
+                        <td class="border">
+                            {{ $party->name }}
+                            @if($party->trashed())
+                                <span class="badge bg-danger ms-2">Deleted</span>
+                            @endif
+                        </td>
                         <td class="border">{{ $party->mobile ?? 'N/A' }}</td>
                         <td class="border text-primary">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" fill="currentColor"
@@ -106,6 +111,13 @@
                                             {{ $party->status === 'active' ? 'Deactivate' : 'Activate' }}
                                         </a>
                                     </li>
+                                    @if(!$party->trashed())
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="#" wire:click="deleteParty({{ $party->id }})" wire:confirm="Are you sure you want to delete this party?">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </a>
+                                    </li>
+                                    @endif
                                 </ul>
                             </div>
                         </td>

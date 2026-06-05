@@ -98,10 +98,19 @@ class ListParties extends Component
         $this->dispatch('flashMessage', 'success', 'Party status updated to ' . $newStatus . ' successfully!');
     }
 
+    public function deleteParty($id)
+    {
+        $party = Party::findOrFail($id);
+        $party->update(['deleted_by' => auth()->id()]);
+        $party->delete();
+        $this->dispatch('flashMessage', 'success', 'Party deleted successfully.');
+    }
+
     // Computed property for parties query - dynamic and efficient
     public function getPartiesProperty()
     {
         return Party::query()
+            ->withTrashed()
             ->search($this->search) // Use scope for search
             ->status($this->statusFilter) // Use scope for status filter
             ->orderBy($this->sortColumn, $this->sortDirection) // Dynamic sorting

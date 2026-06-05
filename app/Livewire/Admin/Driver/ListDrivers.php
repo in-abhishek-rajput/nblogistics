@@ -88,10 +88,29 @@ class ListDrivers extends Component
         $this->flashMessage = $message;
     }
 
+    // Toggle driver status
+    public function toggleStatus($id)
+    {
+        $driver = Driver::findOrFail($id);
+        $newStatus = $driver->status === 'active' ? 'inactive' : 'active';
+        $driver->update(['status' => $newStatus]);
+
+        $this->dispatch('flashMessage', 'success', 'Driver status updated to ' . $newStatus . ' successfully!');
+    }
+
+    public function deleteDriver($id)
+    {
+        $driver = Driver::findOrFail($id);
+        $driver->update(['deleted_by' => auth()->id()]);
+        $driver->delete();
+        $this->dispatch('flashMessage', 'success', 'Driver deleted successfully.');
+    }
+
     // Computed property for drivers query - dynamic and efficient
     public function getDriversProperty()
     {
         return Driver::query()
+            ->withTrashed()
             ->search($this->search) // Use scope for search
             ->status($this->statusFilter) // Use scope for status filter
             ->orderBy($this->sortColumn, $this->sortDirection) // Dynamic sorting

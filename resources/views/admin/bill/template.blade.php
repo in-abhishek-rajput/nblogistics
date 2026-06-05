@@ -366,13 +366,19 @@
                 background-color: white;
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
+                margin: 0;
+                padding: 0;
             }
             .a4-container {
                 box-shadow: none;
                 margin: 0;
-                padding: 5mm;
+                padding: 0;
                 width: 100%;
-                height: 100%;
+                height: auto;
+                min-height: 0;
+            }
+            .invoice-wrapper {
+                page-break-inside: avoid;
             }
             @page {
                 size: A4 portrait;

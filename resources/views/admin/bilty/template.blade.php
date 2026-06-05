@@ -245,13 +245,19 @@
                 background-color: white;
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
+                margin: 0;
+                padding: 0;
             }
             .a4-container {
                 box-shadow: none;
                 margin: 0;
-                padding: 5mm;
+                padding: 0;
                 width: 100%;
-                height: 100%;
+                height: auto;
+                min-height: 0; /* Prevent spilling to second page due to 297mm min-height */
+            }
+            .bilty-wrapper {
+                page-break-inside: avoid;
             }
             @page {
                 size: A4 portrait;
@@ -352,33 +358,21 @@
                 <th style="width: 30%;">FRIGHT<br>TO PAY / PAID</th>
             </tr>
             <tr>
-                <td style="height: 250px;"><span style="font-weight: normal;">{{ $document->data['no_of_packages'] ?? ($trip->number_of_packages ?? '') }}</span></td>
+                <td style="height: 150px;"><span style="font-weight: normal;">{{ $document->data['no_of_packages'] ?? ($trip->number_of_packages ?? '') }}</span></td>
                 <td><span style="font-weight: normal;">{{ $document->data['description_of_goods'] ?? ($trip->material_name ?? '') }}</span></td>
                 <td><span style="font-weight: normal;">{{ $document->data['actual_weight'] ?? ($trip->actual_weight ?? '') }}</span></td>
                 <td class="freight-col">
                     <table class="freight-inner-table">
                         <tr>
-                            <td>FRIGHT :</td>
-                            <td><span style="font-weight: normal;">{{ isset($document->data['bilty_freight_amount']) ? number_format((float)$document->data['bilty_freight_amount'], 2) : '' }}</span></td>
+                            <td>
+                                <span>FRIGHT :</span>
+                                <span style="font-weight: normal;">{{ isset($document->data['bilty_freight_amount']) ? number_format((float)$document->data['bilty_freight_amount'], 2) : '' }}</span>
+                            </td>
                         </tr>
                         <tr>
                             <td></td>
-                            <td></td>
                         </tr>
                         <tr>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
                             <td></td>
                         </tr>
                     </table>
@@ -394,16 +388,22 @@
                 <td class="freight-col">
                     <table class="freight-inner-table">
                         <tr>
-                            <td>HAMALI CHARGES :</td>
-                            <td><span style="font-weight: normal;">{{ isset($document->data['hamali_charges']) && $document->data['hamali_charges'] > 0 ? number_format((float)$document->data['hamali_charges'], 2) : '' }}</span></td>
+                            <td>
+                                <span>HAMALI CHARGES :</span>
+                                <span style="font-weight: normal;">{{ isset($document->data['hamali_charges']) && $document->data['hamali_charges'] > 0 ? number_format((float)$document->data['hamali_charges'], 2) : '' }}</span>
+                            </td>
                         </tr>
                         <tr>
-                            <td>BILTY CHARGES :</td>
-                            <td><span style="font-weight: normal;">{{ isset($document->data['bilty_charges']) && $document->data['bilty_charges'] > 0 ? number_format((float)$document->data['bilty_charges'], 2) : '' }}</span></td>
+                            <td>
+                                <span>BILTY CHARGES :</span>
+                                <span style="font-weight: normal;">{{ isset($document->data['bilty_charges']) && $document->data['bilty_charges'] > 0 ? number_format((float)$document->data['bilty_charges'], 2) : '' }}</span>
+                            </td>
                         </tr>
                         <tr>
-                            <td>ADVANCE AMOUNT :</td>
-                            <td><span style="font-weight: normal;">{{ isset($document->data['advance_amount']) && $document->data['advance_amount'] > 0 ? number_format((float)$document->data['advance_amount'], 2) : '' }}</span></td>
+                            <td>
+                                <span>ADVANCE AMOUNT :</span>
+                                <span style="font-weight: normal;">{{ isset($document->data['advance_amount']) && $document->data['advance_amount'] > 0 ? number_format((float)$document->data['advance_amount'], 2) : '' }}</span>
+                            </td>
                         </tr>
                     </table>
                 </td>
@@ -416,7 +416,12 @@
                 <td style="width: 35%;">E-WAY BILL NO.: <span style="font-weight: normal;">{{ $document->data['eway_bill_no'] ?? '' }}</span></td>
                 <td style="width: 20%; text-align: center;">INVOICE VALUE<br><span style="font-weight: normal;">{{ $document->data['invoice_value'] ?? '' }}</span></td>
                 <td style="width: 15%; text-align: center;">RATE<br><span style="font-weight: normal;">{{ $document->data['bilty_rate'] ?? '' }}</span></td>
-                <td style="width: 30%; text-align: center;">TOTAL AMOUNT<br><span style="font-weight: normal;">{{ isset($document->data['bilty_total']) ? number_format((float)$document->data['bilty_total'], 2) : '' }}</span></td>
+                <td style="width: 30%;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>TOTAL AMOUNT :</span>
+                        <span style="font-weight: normal;">{{ isset($document->data['bilty_total']) ? number_format((float)$document->data['bilty_total'], 2) : '' }}</span>
+                    </div>
+                </td>
             </tr>
             <tr>
                 <td colspan="4" style="height: 35px;">REMARK : <span style="font-weight: normal;">{{ $document->data['bilty_remark'] ?? ($trip->notes ?? '') }}</span></td>

@@ -78,21 +78,40 @@ The application follows a modernized Laravel architecture heavily relying on Liv
   - Delete expenses with confirmation.
   - Integrates with `AddExpense` and `EditExpense` modals.
 
+### Trip Document Wizard
+- **Purpose:** A unified 3-step wizard to manage Bilty, Invoice, and Receipt documents for a single trip.
+- **Route:** `GET /trips/{tripId}/documents/{step?}` → `admin.trip.documents` wrapper view.
+- **Livewire Component:** `app/Livewire/Admin/Trip/DocumentWizard.php`.
+- **Features:**
+  - **Step 1 (Bilty):** Collects consignment details. Defaults are pulled from the Trip.
+  - **Step 2 (Invoice):** Collects tax invoice details. Data cascades intelligently from the Bilty step. Auto-generates invoice numbers.
+  - **Step 3 (Receipt):** Collects payment receipt details. Data cascades from the Invoice step. Auto-generates receipt numbers.
+  - **Data Storage:** Saves flexible JSON data into the `trip_documents` table via the `TripDocument` model.
+  - **Live Preview:** Allows previewing the printable document at any step.
+
 ### Bilty (Lorry Receipt / LR)
-- **Purpose:** A printable consignment note (Lorry Receipt) generated from a Trip.
-- **Route:** `GET /builty/{id}` → `BiltyController@show` → `admin.bilty.template`.
+- **Purpose:** A printable consignment note (Lorry Receipt) generated from a Trip and Document Wizard.
+- **Routes:** 
+  - `GET /builty/{id}` → `BiltyController@show` → `admin.bilty.template`
+  - `GET /builty/{id}/print` & `/download` available.
 - **Template:** `resources/views/admin/bilty/template.blade.php` — A full A4-styled printable document.
-- **Contents:** LR Number, date, origin/destination, vehicle number, consignor (party) name, material description, number of packages, actual weight, freight amount, advances, bank details, signatures.
-- **Print Support:** Includes CSS `@media print` rules for clean browser-based PDF printing.
-- **Status:** Controller is scaffolded (CRUD methods exist). The `show` method is live and renders the template with trip data.
+- **Contents:** Pulls JSON data from `TripDocument` (Bilty type).
+- **Print Support:** Includes CSS `@media print` rules.
 
 ### Invoice / Bill (Tax Invoice)
 - **Purpose:** A printable Tax Invoice for billing a Party for a trip.
-- **Route:** `GET /invoices/{id}` → `InvoicesController@show` → `admin.bill.template`.
+- **Routes:** 
+  - `GET /invoices/{id}` → `InvoicesController@show` → `admin.bill.template`
+  - `GET /invoices/{id}/print` & `/download` available.
 - **Template:** `resources/views/admin/bill/template.blade.php` — A full A4-styled Tax Invoice document.
-- **Contents:** Invoice number (Trip ID), invoice date, vehicle number, LR number, origin/destination (FROM/TO), party name, material description, freight amount table (with SGST/CGST placeholders), goods description, payment details, bank details, authorised signatures.
-- **Print Support:** Includes CSS `@media print` rules for clean browser-based PDF printing.
-- **Status:** Controller `show` method is live. Full CRUD scaffolded for future multi-trip invoice generation.
+- **Contents:** Pulls JSON data from `TripDocument` (Invoice type).
+- **Print Support:** Includes CSS `@media print` rules.
+
+### Money Receipt
+- **Purpose:** A printable Money Receipt confirming payment received for a trip.
+- **Routes:** `GET /receipts/{id}` → `ReceiptController@show` → `admin.receipt.template`
+- **Template:** `resources/views/admin/receipt/template.blade.php`
+- **Contents:** Pulls JSON data from `TripDocument` (Receipt type). Includes payment amounts, cheque details, and references to Invoice/LR.
 
 ### Driver Attendance
 - **Purpose:** Tracks daily attendance (present/absent/half-day/holiday) for all drivers on a monthly grid.
@@ -188,6 +207,11 @@ The application follows a modernized Laravel architecture heavily relying on Liv
   - `hasMany(TripCharge::class)`
   - `hasMany(TripPayment::class)`
   - `hasMany(TripExpense::class)`
+  - `hasMany(TripDocument::class)`
+- **TripDocument:**
+  - `belongsTo(Trip::class)`
+  - `belongsTo(User::class, 'created_by')`
+  - `belongsTo(User::class, 'updated_by')`
 - **Truck:**
   - `belongsTo(Driver::class)`
 - **Driver:**
@@ -250,8 +274,10 @@ The application follows a modernized Laravel architecture heavily relying on Liv
 | Trip View & Status Flow | ✅ Complete | `ViewTrip.php` (1009 lines) |
 | Trip Expenses (inline) | ✅ Complete | Inline in `ViewTrip`, `TripExpenseModal` |
 | Trip Expenses (global list) | ✅ Complete | `ListExpenses`, `AddExpense`, `EditExpense` |
-| Bilty / LR Template | ✅ Live | `BiltyController@show`, `admin/bilty/template.blade.php` |
-| Invoice / Bill Template | ✅ Live | `InvoicesController@show`, `admin/bill/template.blade.php` |
+| Trip Document Wizard | ✅ Complete | `DocumentWizard.php`, `TripDocument.php`, `documents.blade.php` |
+| Bilty / LR Template | ✅ Live | `BiltyController`, `admin/bilty/template.blade.php` |
+| Invoice / Bill Template | ✅ Live | `InvoicesController`, `admin/bill/template.blade.php` |
+| Money Receipt Template | ✅ Live | `ReceiptController`, `admin/receipt/template.blade.php` |
 | Driver Attendance | ✅ Complete | `Attendance.php`, `driver_attendances` table |
 | Driver Salary | ✅ Complete | `Salary.php`, `DriverSalaryRecord.php` |
 | Reports (Trips/Trucks/Drivers) | ✅ Complete | `TripsReport`, `TrucksReport`, `DriversReport` |

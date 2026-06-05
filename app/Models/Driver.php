@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Trip;
 
 class Driver extends Model
 {
+    use SoftDeletes;
     /**
      * The attributes that are mass assignable.
      * These fields can be filled via mass assignment for flexibility and security.
@@ -19,6 +21,7 @@ class Driver extends Model
         'status',
         'opening_balance',
         'base_salary',
+        'deleted_by',
     ];
 
     /**
