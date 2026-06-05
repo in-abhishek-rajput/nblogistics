@@ -58,20 +58,10 @@ class InvoicesController extends Controller
 
     public function print(string $id)
     {
-        return $this->show($id);
-    }
-
-    public function download(string $id)
-    {
         $trip = Trip::with(['party', 'truck', 'driver', 'advances'])->findOrFail($id);
         $document = TripDocument::invoice()->where('trip_id', $id)->first() ?? new TripDocument(['data' => []]);
 
-        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-            return \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.bill.template', compact('trip', 'document'))
-                ->download(($document->document_number ?? 'invoice') . '.pdf');
-        }
-
-        return view('admin.bill.template', compact('trip', 'document'));
+        return view('admin.bill.template', compact('trip', 'document'))->with('autoPrint', true);
     }
 
     public function destroy(string $id)

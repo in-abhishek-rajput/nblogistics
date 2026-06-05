@@ -50,13 +50,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('bilty', fn () => redirect()->route('builty.index'))->name('bilty.index');
     Route::get('bilty/{id}', fn ($id) => redirect()->route('builty.show', $id))->name('bilty.show');
     Route::get('bilty/{id}/print', fn ($id) => redirect()->route('builty.print', $id))->name('bilty.print');
-    Route::get('bilty/{id}/download', fn ($id) => redirect()->route('builty.download', $id))->name('bilty.download');
 
     // Document print/download routes
     Route::get('invoices/{id}/print', [InvoicesController::class, 'print'])->name('invoices.print');
-    Route::get('invoices/{id}/download', [InvoicesController::class, 'download'])->name('invoices.download');
     Route::get('builty/{id}/print', [BiltyController::class, 'print'])->name('builty.print');
-    Route::get('builty/{id}/download', [BiltyController::class, 'download'])->name('builty.download');
     
     // Trip Document Wizard (Bilty → Invoice → Receipt)
     Route::get('trips/{tripId}/documents/{step?}', function ($tripId, $step = 1) {

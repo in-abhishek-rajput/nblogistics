@@ -657,4 +657,12 @@
 </div>
 
 </body>
+
+@if(!empty($autoPrint))
+<script>
+    window.addEventListener('load', function () {
+        window.print();
+    });
+</script>
+@endif
 </html>
