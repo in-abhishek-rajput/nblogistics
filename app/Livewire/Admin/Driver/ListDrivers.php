@@ -21,6 +21,9 @@ class ListDrivers extends Component
     // Edit properties
     public $editingDriverId = null;
 
+    // Advance properties
+    public $advanceDriverId = null;
+
     // Flash message properties
     public $flashMessage = null;
     public $flashType = null;
@@ -67,6 +70,13 @@ class ListDrivers extends Component
     {
         $this->editingDriverId = $id;
         $this->dispatch('showEditModal');
+    }
+
+    // Set driver for advance
+    public function addAdvance($id)
+    {
+        $this->advanceDriverId = $id;
+        $this->dispatch('showAddAdvanceModal');
     }
 
     // Refresh table after driver added

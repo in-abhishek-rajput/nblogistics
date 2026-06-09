@@ -81,5 +81,20 @@ class Driver extends Model
     {
         return $this->hasMany(Trip::class);
     }
-}
 
+    /**
+     * Get the advances for the driver.
+     */
+    public function driverSalaryRecords()
+    {
+        return $this->hasMany(DriverSalaryRecord::class);
+    }
+
+    /**
+     * Get the advances associated with the driver.
+     */
+    public function advances()
+    {
+        return $this->hasMany(DriverAdvance::class);
+    }
+}

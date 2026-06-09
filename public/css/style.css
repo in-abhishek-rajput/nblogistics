@@ -480,3 +480,7 @@ a {
         padding: 0;
     }
 }
+
+.table-responsive{
+    min-height: 350px;
+}
