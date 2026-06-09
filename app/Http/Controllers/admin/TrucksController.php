@@ -40,7 +40,7 @@ class TrucksController extends Controller
      */
     public function show(string $id)
     {
-        //
+        return view('admin.truck.view', ['truckId' => $id]);
     }
 
     /**
