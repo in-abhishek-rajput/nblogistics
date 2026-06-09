@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Truck;
 
+use App\Models\Truck;
 use Livewire\Component;
 
 class ViewTruck extends Component
@@ -30,7 +31,7 @@ class ViewTruck extends Component
         'diesel_card' => 'Diesel Card',
     ];
 
-    public array $truck = [];
+    public $truck;
 
     public array $stats = [
         ['label' => 'Trip Revenue', 'value' => '₹ 0'],
@@ -53,19 +54,33 @@ class ViewTruck extends Component
         ['date' => '02 Jun 2026', 'reason' => 'EMI Payment', 'expense' => '-₹ 60,000', 'revenue' => ''],
     ];
 
+    protected $listeners = [
+        'truckUpdated' => 'refreshTruck',
+    ];
+
     public function mount(int $truckId)
     {
         $this->truckId = $truckId;
-        $this->truck = [
-            'number' => 'N/A',
-            'type' => 'Tanker',
-            'capacity' => '20 Ton',
-            'model' => 'Mahindra Bolero',
-            'registration' => 'MH12AB1234',
-            'status' => 'Active',
-            'current_driver' => 'Abhishek Rajput',
-            'created_date' => '09 Jun 2026',
-        ];
+        $this->refreshTruck();
+    }
+
+    public function refreshTruck()
+    {
+        $this->truck = Truck::with('driver')->findOrFail($this->truckId);
+    }
+
+    public function editTruck()
+    {
+        return redirect()->route('trucks.edit', $this->truckId);
+    }
+
+    public function deleteTruck()
+    {
+        $truck = Truck::findOrFail($this->truckId);
+        $truck->update(['deleted_by' => auth()->id()]);
+        $truck->delete();
+
+        return redirect()->route('trucks.index');
     }
 
     public function render()

@@ -1,16 +1,19 @@
 <div>
-    {{-- TOP HEADER BAND --}}
     <div class="rounded-3 mb-4 px-4 py-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3"
         style="background: #dde3f0;">
         <div>
             <div class="text-muted small mb-1" style="font-size: 0.78rem;">Truck Details</div>
-            <div class="fw-bold fs-5">{{ $truck['number'] }}</div>
+            <div class="fw-bold fs-5">{{ $truck->truck_number }}</div>
+            <div class="text-muted small">{{ $types[$truck->truck_type] ?? ucfirst($truck->truck_type) }}</div>
         </div>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-light border fw-semibold" style="font-size:0.85rem;">
+            <button type="button" wire:click="editTruck" class="btn btn-light border fw-semibold"
+                style="font-size:0.85rem;">
                 <i class="bi bi-pencil-fill text-primary me-1"></i> Edit
             </button>
-            <button type="button" class="btn btn-light border fw-semibold text-danger" style="font-size:0.85rem;">
+            <button type="button" wire:click="deleteTruck"
+                onclick="confirm('Are you sure you want to delete this truck?') || event.stopImmediatePropagation()"
+                class="btn btn-light border fw-semibold text-danger" style="font-size:0.85rem;">
                 <i class="bi bi-trash-fill me-1"></i> Delete Truck
             </button>
         </div>
