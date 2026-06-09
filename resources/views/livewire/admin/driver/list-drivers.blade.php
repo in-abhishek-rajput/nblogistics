@@ -61,7 +61,7 @@
                     </th>
                     <th scope="col">Truck Type</th>
                     <th scope="col">Mobile</th>
-                    <th scope="col">Opening Balance</th>
+                    <th scope="col">Base Salary</th>
                     <th scope="col" style="width: 100px">
                         <a href="#" wire:click.prevent="sortBy('status')" class="text-decoration-none">
                             Status
@@ -90,7 +90,7 @@
                                 <path
                                     d="M4 3.06h2.726c1.22 0 2.12.575 2.325 1.724H4v1.051h5.051C8.855 7.001 8 7.558 6.788 7.558H4v1.317L8.437 14h2.11L6.095 8.884h.855c2.316-.018 3.465-1.476 3.688-3.049H12V4.784h-1.345c-.08-.778-.357-1.335-.793-1.732H12V2H4z" />
                             </svg>
-                            {{ number_format($driver->opening_balance, 2) }}
+                            {{ number_format($driver->base_salary, 2) }}
                         </td>
                         <td class="border">
                             <span class="badge bg-{{ $statuses[$driver->status]['color'] ?? 'secondary' }}">
@@ -108,6 +108,21 @@
                                     <li>
                                         <a class="dropdown-item" href="#" wire:click="editDriver({{ $driver->id }})">
                                             <i class="bi bi-pencil me-2"></i>Edit
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-primary" href="#" wire:click="addAdvance({{ $driver->id }})">
+                                            <i class="bi bi-cash me-2"></i>Add Advance
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-info" href="{{ route('drivers.advances', $driver->id) }}">
+                                            <i class="bi bi-clock-history me-2"></i>Advance History
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-success" href="{{ route('drivers.salary-details', $driver->id) }}">
+                                            <i class="bi bi-receipt me-2"></i>Salary Details
                                         </a>
                                     </li>
                                     @if(!$driver->trashed())
@@ -166,6 +181,11 @@
                     const modal = new bootstrap.Modal(document.getElementById('editDriverModal'));
                     modal.show();
                 });
+
+                Livewire.on('showAddAdvanceModal', () => {
+                    const modal = new bootstrap.Modal(document.getElementById('addAdvanceModal'));
+                    modal.show();
+                });
    
                 Livewire.on('closeModal', (modalId) => {
                     const modalElement = document.getElementById(modalId);
@@ -194,6 +214,23 @@
                 <div class="modal-body">
                     @if($editingDriverId)
                         <livewire:admin.driver.edit-driver :driver-id="$editingDriverId" :key="'edit-'.$editingDriverId" />
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Add Advance Modal --}}
+    <div class="modal fade" id="addAdvanceModal" tabindex="-1" aria-labelledby="addAdvanceModalLabel" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addAdvanceModalLabel">Add Advance</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if($advanceDriverId)
+                        <livewire:admin.driver.add-advance :driver-id="$advanceDriverId" :key="'advance-'.$advanceDriverId" />
                     @endif
                 </div>
             </div>

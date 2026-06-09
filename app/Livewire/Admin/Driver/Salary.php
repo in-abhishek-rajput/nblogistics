@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Driver;
 
 use App\Models\Driver;
+use App\Models\DriverAdvance;
 use App\Models\DriverAttendance;
 use App\Models\DriverSalaryRecord;
 use Carbon\Carbon;
@@ -51,12 +52,17 @@ class Salary extends Component
 
     public function loadAdvances()
     {
-        $monthStr = $this->getMonthString();
-        $records = DriverSalaryRecord::where('month', $monthStr)->get()->keyBy('driver_id');
-        
+        $startDate = Carbon::createFromDate($this->selectedYear, $this->selectedMonth, 1)->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::createFromDate($this->selectedYear, $this->selectedMonth, 1)->endOfMonth()->format('Y-m-d');
+
+        $advancesSum = DriverAdvance::selectRaw('driver_id, SUM(amount) as total')
+            ->whereBetween('advance_date', [$startDate, $endDate])
+            ->groupBy('driver_id')
+            ->pluck('total', 'driver_id');
+
         $drivers = Driver::all();
         foreach ($drivers as $driver) {
-            $this->advances[$driver->id] = isset($records[$driver->id]) ? $records[$driver->id]->advance_deduction : 0;
+            $this->advances[$driver->id] = $advancesSum[$driver->id] ?? 0;
         }
     }
 
@@ -75,13 +81,12 @@ class Salary extends Component
             ->get();
 
         $presentDays = $attendances->where('status', 'present')->count();
-        $halfDays = $attendances->where('status', 'half_day')->count();
         $holidays = $attendances->where('status', 'holiday')->count();
 
         // Default absent for any day without a record or marked absent
-        $absentDays = $this->daysInMonth - ($presentDays + $halfDays + $holidays);
+        $absentDays = $this->daysInMonth - ($presentDays + $holidays);
 
-        $paidDays = $presentDays + $holidays + ($halfDays * 0.5);
+        $paidDays = $presentDays + $holidays;
 
         $grossSalary = 0;
         if ($this->daysInMonth > 0) {
@@ -102,7 +107,7 @@ class Salary extends Component
                 'total_days' => $this->daysInMonth,
                 'present_days' => $presentDays + $holidays,
                 'absent_days' => $absentDays,
-                'half_days' => $halfDays,
+                'half_days' => 0,
                 'gross_salary' => $grossSalary,
                 'advance_deduction' => $advance,
                 'net_salary' => $netSalary,
@@ -136,9 +141,14 @@ class Salary extends Component
         $savedRecords = DriverSalaryRecord::where('month', $monthStr)->get()->keyBy('driver_id');
 
         if (empty($this->advances) && $drivers->count() > 0) {
+            $advancesSum = DriverAdvance::selectRaw('driver_id, SUM(amount) as total')
+                ->whereBetween('advance_date', [$startDate, $endDate])
+                ->groupBy('driver_id')
+                ->pluck('total', 'driver_id');
+
             foreach ($drivers as $driver) {
                 if (!isset($this->advances[$driver->id])) {
-                    $this->advances[$driver->id] = isset($savedRecords[$driver->id]) ? $savedRecords[$driver->id]->advance_deduction : 0;
+                    $this->advances[$driver->id] = $advancesSum[$driver->id] ?? 0;
                 }
             }
         }

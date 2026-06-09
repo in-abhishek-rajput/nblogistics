@@ -48,9 +48,8 @@
                 @forelse($drivers as $driver)
                     @php
                         $presentDays = $driver->attendances->where('status', 'present')->count();
-                        $halfDays = $driver->attendances->where('status', 'half_day')->count();
                         $holidays = $driver->attendances->where('status', 'holiday')->count();
-                        $paidDays = $presentDays + $holidays + ($halfDays * 0.5);
+                        $paidDays = $presentDays + $holidays;
 
                         $record = $savedRecords[$driver->id] ?? null;
                         
@@ -76,8 +75,8 @@
                         </td>
                         <td>
                             <div class="input-group input-group-sm" style="max-width: 150px;">
-                                <span class="input-group-text">₹</span>
-                                <input type="number" step="0.01" wire:model.live.debounce.500ms="advances.{{ $driver->id }}" class="form-control" @if($isPaid) disabled @endif>
+                                <span class="input-group-text bg-light text-danger fw-bold">₹</span>
+                                <span class="form-control bg-light text-danger fw-bold">{{ number_format($advance, 2) }}</span>
                             </div>
                         </td>
                         <td>

@@ -38,6 +38,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('drivers-salary', function () {
         return view('admin.driver.salary');
     })->name('drivers.salary');
+    Route::get('drivers/{driver}/advances', function ($driver) {
+        return view('admin.driver.advances', ['driverId' => $driver]);
+    })->name('drivers.advances');
+    Route::get('drivers/{driver}/salary-details', function ($driver) {
+        return view('admin.driver.salary-details', ['driverId' => $driver]);
+    })->name('drivers.salary-details');
     Route::resource('drivers', DriversController::class);
     Route::resource('trucks', TrucksController::class);
     Route::resource('expenses', ExpensesController::class);
