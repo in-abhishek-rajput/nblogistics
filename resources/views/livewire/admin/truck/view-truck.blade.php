@@ -68,7 +68,9 @@
             <div class="row g-2 justify-content-center justify-content-md-start text-center">
                 @foreach ($activityCards as $card)
                     <div class="col-auto">
-                        <a href="{{ $card['href'] }}"
+                        @php $isEmiCard = isset($card['openEmiBook']) && $card['openEmiBook']; @endphp
+                        <a href="{{ $isEmiCard ? '#' : $card['href'] }}"
+                            {!! $isEmiCard ? 'wire:click.prevent="$dispatch(\'openEmiBookPanel\')"' : '' !!}
                             class="d-flex flex-column align-items-center text-decoration-none text-dark px-3 py-1"
                             style="min-width:80px;">
                             <div class="mb-2 d-flex align-items-center justify-content-center rounded-circle"
@@ -85,6 +87,8 @@
         </div>
     </div>
 
+    <livewire:admin.truck.emi-book :truck-id="$truck->id" />
+
     {{-- HISTORY TABLE --}}
     <div class="card border-0 shadow-sm" style="border-radius:12px;">
         <div class="card-body p-0">
@@ -100,7 +104,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($historyRows as $row)
+                        @forelse ($historyRows as $row)
                             <tr class="{{ $loop->even ? '' : 'bg-light' }}" style="border-bottom:1px solid #f0f0f0;">
                                 <td class="ps-4 fw-semibold" style="font-size:.85rem;">{{ $row['date'] }}</td>
                                 <td style="font-size:.85rem;">{{ $row['reason'] }}</td>
@@ -121,7 +125,13 @@
                                     </div>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    No EMI history available yet.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

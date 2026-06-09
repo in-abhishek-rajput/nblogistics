@@ -33,29 +33,64 @@ class ViewTruck extends Component
 
     public $truck;
 
-    public array $stats = [
-        ['label' => 'Trip Revenue', 'value' => '₹ 0'],
-        ['label' => 'Total Expenses', 'value' => '₹ 1,20,000'],
-        ['label' => 'Total Profit', 'value' => '-₹ 1,20,000', 'negative' => true],
-    ];
+    public function getTotalRevenueProperty()
+    {
+        return (float) $this->truck->trips()->sum('freight_amount');
+    }
 
-   public array $activityCards = [
-    ['label' => 'Trip Book', 'icon' => 'bi-truck', 'iconColor' => '#3b6fd4', 'href' => '#'],
-    ['label' => 'Fuel Book', 'icon' => 'bi-droplet-fill', 'iconColor' => '#e67e22', 'href' => '#'],
-    ['label' => 'EMI Book', 'icon' => 'bi-receipt', 'iconColor' => '#e74c3c', 'href' => '#'],
-    ['label' => 'Documents', 'icon' => 'bi-person-badge', 'iconColor' => '#27ae60', 'href' => '#'],
-    ['label' => 'Maintenance Book', 'icon' => 'bi-tools', 'iconColor' => '#7f8c8d', 'href' => '#'],
-    ['label' => 'Driver & Other expenses', 'icon' => 'bi-person-circle', 'iconColor' => '#8e44ad', 'href' => '#'],
-    ['label' => 'Diesel Card', 'icon' => 'bi-credit-card-2-front', 'iconColor' => '#16a085', 'href' => '#'],
-];
+    public function getTotalExpensesProperty()
+    {
+        return (float) $this->truck->truckEmiPayments()->where('truck_emi_payments.status', 'paid')->sum('amount');
+    }
 
-    public array $historyRows = [
-        ['date' => '09 Jun 2026', 'reason' => 'EMI Payment', 'expense' => '-₹ 60,000', 'revenue' => ''],
-        ['date' => '02 Jun 2026', 'reason' => 'EMI Payment', 'expense' => '-₹ 60,000', 'revenue' => ''],
+    public function getTotalProfitProperty()
+    {
+        return $this->totalRevenue - $this->totalExpenses;
+    }
+
+    public function getStatsProperty()
+    {
+        return [
+            ['label' => 'Trip Revenue', 'value' => '₹ ' . number_format($this->totalRevenue, 2)],
+            ['label' => 'Total Expenses', 'value' => '₹ ' . number_format($this->totalExpenses, 2)],
+            [
+                'label' => 'Total Profit',
+                'value' => '₹ ' . number_format($this->totalProfit, 2),
+                'negative' => $this->totalProfit < 0,
+            ],
+        ];
+    }
+
+    public function getHistoryRowsProperty()
+    {
+        return $this->truck->truckEmiPayments()
+            ->where('truck_emi_payments.status', 'paid')
+            ->orderByDesc('payment_date')
+            ->get()
+            ->map(function ($payment) {
+                return [
+                    'date' => $payment->payment_date?->format('d M Y') ?? '-',
+                    'reason' => 'EMI Payment',
+                    'expense' => '₹ ' . number_format($payment->amount, 2),
+                    'revenue' => '',
+                ];
+            })
+            ->toArray();
+    }
+
+    public array $activityCards = [
+        ['label' => 'Trip Book', 'icon' => 'bi-truck', 'iconColor' => '#3b6fd4', 'href' => '#'],
+        ['label' => 'Fuel Book', 'icon' => 'bi-droplet-fill', 'iconColor' => '#e67e22', 'href' => '#'],
+        ['label' => 'EMI Book', 'icon' => 'bi-receipt', 'iconColor' => '#e74c3c', 'href' => '#', 'openEmiBook' => true],
+        ['label' => 'Documents', 'icon' => 'bi-person-badge', 'iconColor' => '#27ae60', 'href' => '#'],
+        ['label' => 'Maintenance Book', 'icon' => 'bi-tools', 'iconColor' => '#7f8c8d', 'href' => '#'],
+        ['label' => 'Driver & Other expenses', 'icon' => 'bi-person-circle', 'iconColor' => '#8e44ad', 'href' => '#'],
+        ['label' => 'Diesel Card', 'icon' => 'bi-credit-card-2-front', 'iconColor' => '#16a085', 'href' => '#'],
     ];
 
     protected $listeners = [
         'truckUpdated' => 'refreshTruck',
+        'emiBookUpdated' => 'refreshTruck',
     ];
 
     public function mount(int $truckId)
@@ -85,6 +120,10 @@ class ViewTruck extends Component
 
     public function render()
     {
-        return view('livewire.admin.truck.view-truck');
+        return view('livewire.admin.truck.view-truck', [
+            'stats' => $this->stats,
+            'historyRows' => $this->historyRows,
+        ]);
     }
+
 }
