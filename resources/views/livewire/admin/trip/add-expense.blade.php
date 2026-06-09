@@ -28,15 +28,36 @@
                 <label for="trip_id" class="form-label">
                     Trip <span class="text-danger">*</span>
                 </label>
-                <select
-                    class="form-select @error('trip_id') is-invalid @enderror"
-                    id="trip_id"
-                    wire:model="trip_id">
-                    <option value="">Select Trip</option>
-                    @foreach ($trips as $trip)
-                        <option value="{{ $trip->id }}">{{ $trip->party->name ?? 'N/A' }} - {{ $trip->origin ?? 'N/A' }} → {{ $trip->destination ?? 'N/A' }}</option>
-                    @endforeach
-                </select>
+                <div x-data="{ open: @entangle('showTripDropdown') }" @click.outside="open = false" class="position-relative">
+                    <input
+                        type="text"
+                        wire:model.live="tripSearch"
+                        @focus="open = true"
+                        @input="open = true"
+                        placeholder="Search trip..."
+                        class="form-control @error('trip_id') is-invalid @enderror"
+                        autocomplete="off"
+                    >
+                    <input type="hidden" wire:model="trip_id">
+
+                    <div x-show="open" class="position-absolute w-100 bg-white border border-top-0 shadow-sm" style="top: 100%; left: 0; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                        @if ($filteredTrips)
+                            @foreach ($filteredTrips as $trip)
+                                <div
+                                    @click="@this.set('trip_id', {{ $trip['id'] }}); @this.set('tripSearch', @js($trip['name'])); open = false"
+                                    class="px-3 py-2"
+                                    style="cursor: pointer; background-color: #f8f9fa;"
+                                >
+                                    {{ $trip['name'] }}
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="px-3 py-2 text-muted text-sm">
+                                No trips found.
+                            </div>
+                        @endif
+                    </div>
+                </div>
                 @error('trip_id')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -49,15 +70,36 @@
                 <label for="truck_id" class="form-label">
                     Truck <span class="text-danger">*</span>
                 </label>
-                <select
-                    class="form-select @error('truck_id') is-invalid @enderror"
-                    id="truck_id"
-                    wire:model="truck_id">
-                    <option value="">Select Truck</option>
-                    @foreach ($trucks as $truck)
-                        <option value="{{ $truck->id }}">{{ $truck->truck_number }}</option>
-                    @endforeach
-                </select>
+                <div x-data="{ open: @entangle('showTruckDropdown') }" @click.outside="open = false" class="position-relative">
+                    <input
+                        type="text"
+                        wire:model.live="truckSearch"
+                        @focus="open = true"
+                        @input="open = true"
+                        placeholder="Search truck..."
+                        class="form-control @error('truck_id') is-invalid @enderror"
+                        autocomplete="off"
+                    >
+                    <input type="hidden" wire:model="truck_id">
+
+                    <div x-show="open" class="position-absolute w-100 bg-white border border-top-0 shadow-sm" style="top: 100%; left: 0; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                        @if ($filteredTrucks)
+                            @foreach ($filteredTrucks as $truck)
+                                <div
+                                    @click="@this.set('truck_id', {{ $truck['id'] }}); @this.set('truckSearch', @js($truck['name'])); open = false"
+                                    class="px-3 py-2"
+                                    style="cursor: pointer; background-color: #f8f9fa;"
+                                >
+                                    {{ $truck['name'] }}
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="px-3 py-2 text-muted text-sm">
+                                No trucks found.
+                            </div>
+                        @endif
+                    </div>
+                </div>
                 @error('truck_id')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -69,16 +111,19 @@
                 <label for="expense_type" class="form-label">
                     Expense Type <span class="text-danger">*</span>
                 </label>
-                <select
-                    class="form-select @error('expense_type') is-invalid @enderror"
+                <input
+                    type="text"
+                    class="form-control @error('expense_type') is-invalid @enderror"
                     id="expense_type"
                     wire:model="expense_type"
+                    list="expenseTypeOptions"
+                    placeholder="Type or select expense type"
                     required>
-                    <option value="">Select Expense Type</option>
+                <datalist id="expenseTypeOptions">
                     @foreach($expenseTypeOptions as $type)
                         <option value="{{ $type }}">{{ $type }}</option>
                     @endforeach
-                </select>
+                </datalist>
                 @error('expense_type')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror

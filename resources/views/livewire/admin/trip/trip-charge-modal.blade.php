@@ -44,16 +44,19 @@
                         <label for="charge_type" class="form-label">
                             {{ $chargeTypeLabel }} <span class="text-danger">*</span>
                         </label>
-                        <select
-                            class="form-select @error('charge_type') is-invalid @enderror"
+                        <input
+                            type="text"
+                            class="form-control @error('charge_type') is-invalid @enderror"
                             id="charge_type"
                             wire:model="charge_type"
+                            list="chargeTypeOptionsModal"
+                            placeholder="Type or select {{ $chargeTypeLabel }}"
                             required>
-                            <option value="">Select {{ $chargeTypeLabel }}</option>
+                        <datalist id="chargeTypeOptionsModal">
                             @foreach($chargeTypeOptions as $key => $label)
                                 <option value="{{ $key }}">{{ $label }}</option>
                             @endforeach
-                        </select>
+                        </datalist>
                         @error('charge_type')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

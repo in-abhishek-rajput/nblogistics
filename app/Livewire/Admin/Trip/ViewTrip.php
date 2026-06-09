@@ -136,20 +136,13 @@ class ViewTrip extends Component
     ];
 
     public array $chargeTypeOptions = [
-        'toll' => 'Toll',
-        'parking' => 'Parking',
-        'loading_unloading' => 'Loading/Unloading',
-        'others' => 'Others',
+        'Toll' => 'Toll',
+        'Parking' => 'Parking',
+        'Loading/Unloading' => 'Loading/Unloading',
+        'Others' => 'Others',
     ];
 
-    public array $expenseTypeOptions = [
-        'toll' => 'Toll',
-        'parking' => 'Parking',
-        'loading_unloading' => 'Loading/Unloading',
-        'fuel' => 'Fuel',
-        'maintenance' => 'Maintenance',
-        'others' => 'Others',
-    ];
+    public array $expenseTypeOptions = [];
 
     public array $expensePaymentModeOptions = [
         'cash' => 'Cash',
@@ -216,6 +209,7 @@ class ViewTrip extends Component
     {
         $this->tripId = $tripId;
         $this->reloadTrip();
+        $this->expenseTypeOptions = $this->loadExpenseTypeOptions();
     }
 
     // ─── Private Helpers ──────────────────────────────────────────────────────
@@ -227,6 +221,31 @@ class ViewTrip extends Component
     private function reloadTrip(): void
     {
         $this->trip = Trip::with(['party', 'truck', 'driver', 'advances', 'charges', 'payments', 'expenses'])->findOrFail($this->tripId);
+    }
+
+    /**
+     * Load the same expense labels used by the standalone AddExpense module.
+     * The View Trip expense form doesn't use categories, so we flatten all labels.
+     */
+    private function loadExpenseTypeOptions(): array
+    {
+        $jsonPath = public_path('js/expense_types.json');
+        if (!file_exists($jsonPath)) {
+            return [];
+        }
+
+        $types = json_decode(file_get_contents($jsonPath), true) ?? [];
+        $flat = [];
+
+        foreach ($types as $group) {
+            foreach ((array) $group as $label) {
+                $flat[] = $label;
+            }
+        }
+
+        $flat = array_values(array_unique($flat));
+
+        return array_combine($flat, $flat) ?: [];
     }
 
     /**
@@ -640,6 +659,7 @@ class ViewTrip extends Component
 
     public function saveAdvance(): void
     {
+        $this->advance_payment_method = $this->normalizePaymentMethodValue($this->advance_payment_method);
         $this->validateAdvance();
         $this->savingAdvance = true;
 
@@ -777,7 +797,7 @@ class ViewTrip extends Component
     {
         $this->validate([
             'charge_direction' => 'required|string|in:' . implode(',', array_keys($this->chargeDirections)),
-            'charge_type' => 'required|string|in:' . implode(',', array_keys($this->chargeTypeOptions)),
+            'charge_type' => 'required|string|max:255',
             'charge_amount' => 'required|numeric|min:0.01|max:99999999.99',
             'charge_date' => 'required|date|before_or_equal:today',
             'charge_notes' => 'nullable|string|max:500',
@@ -825,6 +845,7 @@ class ViewTrip extends Component
 
     public function savePayment(): void
     {
+        $this->payment_payment_method = $this->normalizePaymentMethodValue($this->payment_payment_method);
         $this->validatePayment();
         $this->savingPayment = true;
 
@@ -963,7 +984,7 @@ class ViewTrip extends Component
     private function validateExpense(): void
     {
         $this->validate([
-            'expense_type' => 'required|string|in:' . implode(',', array_keys($this->expenseTypeOptions)),
+            'expense_type' => 'required|string|max:255',
             'expense_amount' => 'required|numeric|min:0.01|max:99999999.99',
             'expense_date' => 'required|date|before_or_equal:today',
             'expense_payment_mode' => 'required|string|in:' . implode(',', array_keys($this->expensePaymentModeOptions)),
@@ -977,6 +998,19 @@ class ViewTrip extends Component
             'expense_date.before_or_equal' => 'Expense date cannot be in the future.',
             'expense_payment_mode.required' => 'Payment mode is required.',
         ]);
+    }
+
+    private function normalizePaymentMethodValue(string $value): string
+    {
+        $needle = strtolower(trim($value));
+
+        foreach ($this->paymentMethods as $key => $label) {
+            if (strtolower($key) === $needle || strtolower($label) === $needle) {
+                return $key;
+            }
+        }
+
+        return $value;
     }
 
     private function getExpenseData(): array

@@ -96,6 +96,7 @@ class TripAdvanceModal extends Component
     {
         $this->saving = true;
 
+        $this->payment_method = $this->normalizePaymentMethodValue($this->payment_method);
         $validated = $this->validate();
 
         try {
@@ -152,6 +153,19 @@ class TripAdvanceModal extends Component
         $this->received_by_driver = false;
         $this->notes = '';
         $this->resetErrorBag();
+    }
+
+    private function normalizePaymentMethodValue(string $value): string
+    {
+        $needle = strtolower(trim($value));
+
+        foreach ($this->paymentMethods as $key => $label) {
+            if (strtolower($key) === $needle || strtolower($label) === $needle) {
+                return $key;
+            }
+        }
+
+        return $value;
     }
 
     /**

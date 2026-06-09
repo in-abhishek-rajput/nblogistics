@@ -113,26 +113,31 @@
                             </span>
                         </td>
                         <td class="border">
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-three-dots"></i>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item" href="#"
-                                            wire:click="editTruck({{ $truck->id }})">
-                                            <i class="bi bi-pencil me-2"></i>Edit
-                                        </a>
-                                    </li>
-                                    @if(!$truck->trashed())
-                                    <li>
-                                        <a class="dropdown-item text-danger" href="#" wire:click="deleteTruck({{ $truck->id }})" wire:confirm="Are you sure you want to delete this truck?">
-                                            <i class="bi bi-trash me-2"></i>Delete
-                                        </a>
-                                    </li>
-                                    @endif
-                                </ul>
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{{ route('trucks.show', $truck->id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="#"
+                                                wire:click="editTruck({{ $truck->id }})">
+                                                <i class="bi bi-pencil me-2"></i>Edit
+                                            </a>
+                                        </li>
+                                        @if(!$truck->trashed())
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="#" wire:click="deleteTruck({{ $truck->id }})" wire:confirm="Are you sure you want to delete this truck?">
+                                                <i class="bi bi-trash me-2"></i>Delete
+                                            </a>
+                                        </li>
+                                        @endif
+                                    </ul>
+                                </div>
                             </div>
                         </td>
                     </tr>
