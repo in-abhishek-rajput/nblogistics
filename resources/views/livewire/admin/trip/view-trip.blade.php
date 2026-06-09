@@ -404,11 +404,17 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Payment Method <span class="text-danger">*</span></label>
-                                        <select class="form-select @error('advance_payment_method') is-invalid @enderror" wire:model="advance_payment_method">
+                                        <input
+                                            type="text"
+                                            class="form-control @error('advance_payment_method') is-invalid @enderror"
+                                            wire:model="advance_payment_method"
+                                            list="advancePaymentMethodsView"
+                                            placeholder="Type or select payment method">
+                                        <datalist id="advancePaymentMethodsView">
                                             @foreach($paymentMethods as $key => $label)
                                                 <option value="{{ $key }}">{{ $label }}</option>
                                             @endforeach
-                                        </select>
+                                        </datalist>
                                         @error('advance_payment_method') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                     </div>
                                     <div class="col-md-6">
@@ -500,11 +506,17 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">{{ $chargeTypeLabel }} <span class="text-danger">*</span></label>
-                                        <select class="form-select @error('charge_type') is-invalid @enderror" wire:model="charge_type">
+                                        <input
+                                            type="text"
+                                            class="form-control @error('charge_type') is-invalid @enderror"
+                                            wire:model="charge_type"
+                                            list="chargeTypeOptionsView"
+                                            placeholder="Type or select charge type">
+                                        <datalist id="chargeTypeOptionsView">
                                             @foreach($chargeTypeOptions as $key => $label)
                                                 <option value="{{ $key }}">{{ $label }}</option>
                                             @endforeach
-                                        </select>
+                                        </datalist>
                                         @error('charge_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                     </div>
                                     <div class="col-md-6">
@@ -588,11 +600,17 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Payment Method <span class="text-danger">*</span></label>
-                                        <select class="form-select @error('payment_payment_method') is-invalid @enderror" wire:model="payment_payment_method">
+                                        <input
+                                            type="text"
+                                            class="form-control @error('payment_payment_method') is-invalid @enderror"
+                                            wire:model="payment_payment_method"
+                                            list="paymentMethodsView"
+                                            placeholder="Type or select payment method">
+                                        <datalist id="paymentMethodsView">
                                             @foreach($paymentMethods as $key => $label)
                                                 <option value="{{ $key }}">{{ $label }}</option>
                                             @endforeach
-                                        </select>
+                                        </datalist>
                                         @error('payment_payment_method') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                     </div>
                                     <div class="col-md-6">
@@ -636,12 +654,17 @@
                                 <div class="row g-2">
                                     <div class="col-md-6">
                                         <label class="form-label">Expense Type <span class="text-danger">*</span></label>
-                                        <select class="form-select @error('expense_type') is-invalid @enderror" wire:model="expense_type">
-                                            <option value="">Select Type</option>
+                                        <input
+                                            type="text"
+                                            class="form-control @error('expense_type') is-invalid @enderror"
+                                            wire:model="expense_type"
+                                            list="expenseTypeOptionsView"
+                                            placeholder="Type or select expense type">
+                                        <datalist id="expenseTypeOptionsView">
                                             @foreach($expenseTypeOptions as $key => $label)
                                                 <option value="{{ $key }}">{{ $label }}</option>
                                             @endforeach
-                                        </select>
+                                        </datalist>
                                         @error('expense_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                     </div>
                                     <div class="col-md-6">
@@ -1093,5 +1116,3 @@
     </div>{{-- /podModal --}}
 
 </div>{{-- /row --}}
-
-

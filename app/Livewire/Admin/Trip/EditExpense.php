@@ -22,6 +22,20 @@ class EditExpense extends Component
     public bool $add_to_party_bill = false;
     public string $notes = '';
 
+    // Autocomplete search
+    public $tripSearch = '';
+    public $truckSearch = '';
+    public $expenseTypeSearch = '';
+
+    // Preloaded lists
+    public $tripList = [];
+    public $truckList = [];
+
+    // UI state
+    public $showTripDropdown = false;
+    public $showTruckDropdown = false;
+    public $showExpenseTypeDropdown = false;
+
     // Loading state for submit button
     public bool $saving = false;
 
@@ -54,6 +68,30 @@ class EditExpense extends Component
         $this->add_to_party_bill = $expense->add_to_party_bill;
         $this->notes = $expense->notes ?? '';
 
+        $this->tripList = Trip::with(['party', 'truck'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($trip) {
+                return [
+                    'id' => $trip->id,
+                    'name' => ($trip->party->name ?? 'N/A') . ' - ' . ($trip->origin ?? 'N/A') . ' → ' . ($trip->destination ?? 'N/A'),
+                ];
+            })
+            ->toArray();
+
+        $this->truckList = Truck::orderBy('truck_number', 'asc')
+            ->get()
+            ->map(function ($truck) {
+                return [
+                    'id' => $truck->id,
+                    'name' => $truck->truck_number,
+                ];
+            })
+            ->toArray();
+
+        $this->tripSearch = collect($this->tripList)->firstWhere('id', $this->trip_id)['name'] ?? '';
+        $this->truckSearch = collect($this->truckList)->firstWhere('id', $this->truck_id)['name'] ?? '';
+
         // Load expense types from JSON
         $jsonPath = public_path('js/expense_types.json');
         if (file_exists($jsonPath)) {
@@ -61,16 +99,20 @@ class EditExpense extends Component
         }
 
         // Set initial options based on loaded category
-        $this->expenseTypeOptions = $this->expenseTypesMap[$this->expense_category] ?? [];
+        $this->expenseTypeOptions = $this->normalizeExpenseOptions($this->expenseTypesMap[$this->expense_category] ?? []);
+        $this->expenseTypeSearch = $this->expense_type;
     }
 
     public function updatedExpenseCategory($value)
     {
         // Auto update expense_type options from JSON mapping when category changes
-        $this->expenseTypeOptions = $this->expenseTypesMap[$value] ?? [];
+        $this->expenseTypeOptions = $this->normalizeExpenseOptions($this->expenseTypesMap[$value] ?? []);
         
         // Fallback: If category not found or changed, reset type
         $this->expense_type = '';
+        $this->expenseTypeSearch = '';
+        $this->tripSearch = '';
+        $this->truckSearch = '';
         
         // Reset related IDs
         if ($value === 'trip') {
@@ -81,6 +123,40 @@ class EditExpense extends Component
             $this->trip_id = null;
             $this->truck_id = null;
         }
+    }
+
+    public function updatedTripSearch($value)
+    {
+        if (empty($value)) {
+            $this->trip_id = null;
+            return;
+        }
+
+        $selectedTrip = collect($this->tripList)->firstWhere('name', $value);
+        $this->trip_id = $selectedTrip['id'] ?? null;
+    }
+
+    public function updatedTruckSearch($value)
+    {
+        if (empty($value)) {
+            $this->truck_id = null;
+            return;
+        }
+
+        $selectedTruck = collect($this->truckList)->firstWhere('name', $value);
+        $this->truck_id = $selectedTruck['id'] ?? null;
+    }
+
+    public function updatedExpenseTypeSearch($value)
+    {
+        $this->expense_type = $value;
+    }
+
+    private function normalizeExpenseOptions(array $options): array
+    {
+        $options = array_values(array_unique($options));
+
+        return array_combine($options, $options) ?: [];
     }
 
     /**
@@ -176,10 +252,50 @@ class EditExpense extends Component
     public function render()
     {
         return view('livewire.admin.trip.edit-expense', [
-            'trips' => $this->trips,
-            'trucks' => $this->trucks,
+            'filteredTrips' => $this->filteredTrips,
+            'filteredTrucks' => $this->filteredTrucks,
+            'filteredExpenseTypes' => $this->filteredExpenseTypes,
             'expenseTypeOptions' => $this->expenseTypeOptions,
             'paymentModeOptions' => $this->paymentModeOptions,
         ]);
+    }
+
+    public function getFilteredTripsProperty()
+    {
+        if (!$this->tripSearch) {
+            return $this->tripList;
+        }
+
+        $search = strtolower($this->tripSearch);
+        return array_filter($this->tripList, function ($trip) use ($search) {
+            return strpos(strtolower($trip['name']), $search) !== false;
+        });
+    }
+
+    public function getFilteredTrucksProperty()
+    {
+        if (!$this->truckSearch) {
+            return $this->truckList;
+        }
+
+        $search = strtolower($this->truckSearch);
+        return array_filter($this->truckList, function ($truck) use ($search) {
+            return strpos(strtolower($truck['name']), $search) !== false;
+        });
+    }
+
+    public function getFilteredExpenseTypesProperty()
+    {
+        if (!$this->expenseTypeSearch) {
+            return array_values($this->expenseTypeOptions);
+        }
+
+        $search = strtolower($this->expenseTypeSearch);
+        return array_filter(
+            array_values($this->expenseTypeOptions),
+            function ($type) use ($search) {
+                return strpos(strtolower($type), $search) !== false;
+            }
+        );
     }
 }

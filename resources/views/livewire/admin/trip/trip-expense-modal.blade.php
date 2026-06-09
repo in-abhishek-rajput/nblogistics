@@ -19,16 +19,19 @@
                         <label for="expense_type" class="form-label">
                             Expense Type <span class="text-danger">*</span>
                         </label>
-                        <select
-                            class="form-select @error('expense_type') is-invalid @enderror"
+                        <input
+                            type="text"
+                            class="form-control @error('expense_type') is-invalid @enderror"
                             id="expense_type"
                             wire:model="expense_type"
+                            list="expenseTypeOptionsModal"
+                            placeholder="Type or select expense type"
                             required>
-                            <option value="">Select Expense Type</option>
+                        <datalist id="expenseTypeOptionsModal">
                             @foreach($expenseTypeOptions as $key => $label)
                                 <option value="{{ $key }}">{{ $label }}</option>
                             @endforeach
-                        </select>
+                        </datalist>
                         @error('expense_type')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

@@ -23,14 +23,7 @@ class TripExpenseModal extends Component
     public bool $saving = false;
 
     // Expense type options (dynamic)
-    public array $expenseTypeOptions = [
-        'toll' => 'Toll',
-        'parking' => 'Parking',
-        'loading_unloading' => 'Loading/Unloading',
-        'fuel' => 'Fuel',
-        'maintenance' => 'Maintenance',
-        'others' => 'Others',
-    ];
+    public array $expenseTypeOptions = [];
 
     // Payment mode options
     public array $paymentModeOptions = [
@@ -70,6 +63,11 @@ class TripExpenseModal extends Component
             'expense_date.before_or_equal' => 'Expense date cannot be in the future.',
             'payment_mode.required' => 'Payment mode is required.',
         ];
+    }
+
+    public function mount(): void
+    {
+        $this->expenseTypeOptions = $this->loadExpenseTypeOptions();
     }
 
     /**
@@ -164,6 +162,27 @@ class TripExpenseModal extends Component
         $this->payment_mode = 'cash';
         $this->add_to_party_bill = false;
         $this->notes = '';
+    }
+
+    private function loadExpenseTypeOptions(): array
+    {
+        $jsonPath = public_path('js/expense_types.json');
+        if (!file_exists($jsonPath)) {
+            return [];
+        }
+
+        $types = json_decode(file_get_contents($jsonPath), true) ?? [];
+
+        $flat = [];
+        foreach ($types as $group) {
+            foreach ((array) $group as $label) {
+                $flat[] = $label;
+            }
+        }
+
+        $flat = array_values(array_unique($flat));
+
+        return array_combine($flat, $flat) ?: [];
     }
 
     /**

@@ -77,7 +77,6 @@ class TripChargeModal extends Component
      */
     public function openChargeModal(int $tripId): void
     {
-        dd($tripId);
         $this->tripId = $tripId;
         $this->resetForm();
         $this->dispatch('show-charge-modal');

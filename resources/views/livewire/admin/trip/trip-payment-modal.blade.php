@@ -43,16 +43,19 @@
                         <label for="payment_method" class="form-label">
                             Payment Method <span class="text-danger">*</span>
                         </label>
-                        <select
-                            class="form-select @error('payment_method') is-invalid @enderror"
+                        <input
+                            type="text"
+                            class="form-control @error('payment_method') is-invalid @enderror"
                             id="payment_method"
                             wire:model="payment_method"
+                            list="paymentMethodsModal"
+                            placeholder="Type or select payment method"
                             required>
-                            <option value="">Select Payment Method</option>
+                        <datalist id="paymentMethodsModal">
                             @foreach($paymentMethods as $key => $label)
                                 <option value="{{ $key }}">{{ $label }}</option>
                             @endforeach
-                        </select>
+                        </datalist>
                         @error('payment_method')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
