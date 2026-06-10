@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\TruckFuelExpense;
 
 class Truck extends Model
 {
@@ -115,5 +116,10 @@ class Truck extends Model
             'id',
             'id'
         );
+    }
+
+    public function truckFuelExpenses(): HasMany
+    {
+        return $this->hasMany(TruckFuelExpense::class, 'truck_id');
     }
 }

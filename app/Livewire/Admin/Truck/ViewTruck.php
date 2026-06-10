@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Truck;
 
 use App\Models\Truck;
+use Illuminate\Support\Carbon;
 use Livewire\Component;
 
 class ViewTruck extends Component
@@ -40,7 +41,10 @@ class ViewTruck extends Component
 
     public function getTotalExpensesProperty()
     {
-        return (float) $this->truck->truckEmiPayments()->where('truck_emi_payments.status', 'paid')->sum('amount');
+        $emiExpenses = (float) $this->truck->truckEmiPayments()->where('truck_emi_payments.status', 'paid')->sum('amount');
+        $fuelExpenses = (float) $this->truck->truckFuelExpenses()->sum('expense_amount');
+
+        return $emiExpenses + $fuelExpenses;
     }
 
     public function getTotalProfitProperty()
@@ -63,7 +67,7 @@ class ViewTruck extends Component
 
     public function getHistoryRowsProperty()
     {
-        return $this->truck->truckEmiPayments()
+        $emiRows = $this->truck->truckEmiPayments()
             ->where('truck_emi_payments.status', 'paid')
             ->orderByDesc('payment_date')
             ->get()
@@ -73,14 +77,36 @@ class ViewTruck extends Component
                     'reason' => 'EMI Payment',
                     'expense' => '₹ ' . number_format($payment->amount, 2),
                     'revenue' => '',
+                    'sortDate' => $payment->payment_date,
                 ];
+            });
+
+        $fuelRows = $this->truck->truckFuelExpenses()
+            ->orderByDesc('expense_date')
+            ->get()
+            ->map(function ($expense) {
+                return [
+                    'date' => $expense->expense_date?->format('d M Y') ?? '-',
+                    'reason' => 'Fuel Expense',
+                    'expense' => '₹ ' . number_format($expense->expense_amount, 2),
+                    'revenue' => '',
+                    'sortDate' => $expense->expense_date,
+                ];
+            });
+
+        return $emiRows->concat($fuelRows)
+            ->sortByDesc(fn ($row) => $row['sortDate'] ?? Carbon::minValue())
+            ->map(function ($row) {
+                unset($row['sortDate']);
+                return $row;
             })
+            ->values()
             ->toArray();
     }
 
     public array $activityCards = [
         ['label' => 'Trip Book', 'icon' => 'bi-truck', 'iconColor' => '#3b6fd4', 'href' => '#'],
-        ['label' => 'Fuel Book', 'icon' => 'bi-droplet-fill', 'iconColor' => '#e67e22', 'href' => '#'],
+        ['label' => 'Fuel Book', 'icon' => 'bi-droplet-fill', 'iconColor' => '#e67e22', 'href' => '#', 'openFuelBook' => true],
         ['label' => 'EMI Book', 'icon' => 'bi-receipt', 'iconColor' => '#e74c3c', 'href' => '#', 'openEmiBook' => true],
         ['label' => 'Documents', 'icon' => 'bi-person-badge', 'iconColor' => '#27ae60', 'href' => '#'],
         ['label' => 'Maintenance Book', 'icon' => 'bi-tools', 'iconColor' => '#7f8c8d', 'href' => '#'],
@@ -91,6 +117,7 @@ class ViewTruck extends Component
     protected $listeners = [
         'truckUpdated' => 'refreshTruck',
         'emiBookUpdated' => 'refreshTruck',
+        'fuelBookUpdated' => 'refreshTruck',
     ];
 
     public function mount(int $truckId)

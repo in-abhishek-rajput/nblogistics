@@ -67,12 +67,28 @@
         <div class="card-body py-3">
             <div class="row g-2 justify-content-center justify-content-md-start text-center">
                 @foreach ($activityCards as $card)
+                    @php
+                        $openEvent = false;
+                        $eventName = null;
+                        if (isset($card['openEmiBook']) && $card['openEmiBook']) {
+                            $openEvent = true;
+                            $eventName = 'openEmiBookPanel';
+                        }
+                        if (isset($card['openFuelBook']) && $card['openFuelBook']) {
+                            $openEvent = true;
+                            $eventName = 'openFuelBookPanel';
+                        }
+                    @endphp
                     <div class="col-auto">
-                        @php $isEmiCard = isset($card['openEmiBook']) && $card['openEmiBook']; @endphp
-                        <a href="{{ $isEmiCard ? '#' : $card['href'] }}"
-                            {!! $isEmiCard ? 'wire:click.prevent="$dispatch(\'openEmiBookPanel\')"' : '' !!}
-                            class="d-flex flex-column align-items-center text-decoration-none text-dark px-3 py-1"
-                            style="min-width:80px;">
+                        @if ($openEvent)
+                            <a href="#" wire:click.prevent="$dispatch('{{ $eventName }}')"
+                                class="d-flex flex-column align-items-center text-decoration-none text-dark px-3 py-1"
+                                style="min-width:80px;">
+                        @else
+                            <a href="{{ $card['href'] }}"
+                                class="d-flex flex-column align-items-center text-decoration-none text-dark px-3 py-1"
+                                style="min-width:80px;">
+                        @endif
                             <div class="mb-2 d-flex align-items-center justify-content-center rounded-circle"
                                 style="width:54px;height:54px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.08);">
                                 <i class="bi {{ $card['icon'] }} fs-4"
@@ -88,6 +104,7 @@
     </div>
 
     <livewire:admin.truck.emi-book :truck-id="$truck->id" />
+    <livewire:admin.truck.fuel-book :truck-id="$truck->id" />
 
     {{-- HISTORY TABLE --}}
     <div class="card border-0 shadow-sm" style="border-radius:12px;">
