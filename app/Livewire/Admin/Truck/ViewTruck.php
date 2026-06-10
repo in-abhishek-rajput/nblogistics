@@ -5,9 +5,11 @@ namespace App\Livewire\Admin\Truck;
 use App\Models\Truck;
 use Illuminate\Support\Carbon;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class ViewTruck extends Component
 {
+    use WithPagination;
     public int $truckId;
     public string $monthFilter = 'all';
     public string $activityFilter = 'all';
@@ -94,6 +96,16 @@ class ViewTruck extends Component
     public function getTotalProfitProperty()
     {
         return $this->totalRevenue - $this->totalExpenses;
+    }
+
+    public function updatingMonthFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingActivityFilter(): void
+    {
+        $this->resetPage();
     }
 
     public function getStatsProperty()

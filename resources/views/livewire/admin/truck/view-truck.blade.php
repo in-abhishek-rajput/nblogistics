@@ -23,7 +23,7 @@
     <div class="row g-3 align-items-end mb-4">
         <div class="col-auto">
             <label class="form-label small mb-1 text-muted">Date</label>
-            <select wire:model="monthFilter" class="form-select form-select-sm" style="min-width:140px;">
+            <select wire:model.live="monthFilter" class="form-select form-select-sm" style="min-width:140px;">
                 @foreach ($monthOptions as $key => $label)
                     <option value="{{ $key }}">{{ $label }}</option>
                 @endforeach
@@ -31,7 +31,7 @@
         </div>
         <div class="col-auto">
             <label class="form-label small mb-1 text-muted">Filter</label>
-            <select wire:model="activityFilter" class="form-select form-select-sm" style="min-width:180px;">
+            <select wire:model.live="activityFilter" class="form-select form-select-sm" style="min-width:180px;">
                 @foreach ($activityOptions as $key => $label)
                     <option value="{{ $key }}">{{ $label }}</option>
                 @endforeach
@@ -143,17 +143,6 @@
                                                 style="width:32px;height:32px;padding:0;"
                                                 wire:click="viewTrip({{ $row['id'] }})">
                                                 <i class="bi bi-eye-fill" style="font-size:.75rem;"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded"
-                                                style="width:32px;height:32px;padding:0;"
-                                                wire:click="$dispatch('openTripBookOffcanvas'); $dispatch('editTrip', {{ $row['id'] }})">
-                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
-                                                style="width:32px;height:32px;padding:0;"
-                                                onclick="confirm('Delete this trip?') || event.stopImmediatePropagation()"
-                                                wire:click="$dispatch('openTripBookOffcanvas'); $dispatch('deleteTrip', {{ $row['id'] }})">
-                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
                                             </button>
                                         @elseif ($row['type'] === 'fuel')
                                             <button type="button" class="btn btn-sm btn-outline-primary rounded"
