@@ -36,6 +36,7 @@ class ViewTruck extends Component
 
     public $truck;
     public ?int $viewingTripId = null;
+    public ?int $editingTruckId = null;
 
     public function getTotalRevenueProperty()
     {
@@ -238,12 +239,18 @@ class ViewTruck extends Component
     ];
 
     protected $listeners = [
-        'truckUpdated' => 'refreshTruck',
+        'truckUpdated' => 'onTruckUpdated',
         'emiBookUpdated' => 'refreshTruck',
         'fuelBookUpdated' => 'refreshTruck',
         'tripBookUpdated' => 'refreshTruck',
         'viewTripFromBook' => 'viewTripFromBook',
     ];
+
+    public function onTruckUpdated(): void
+    {
+        $this->editingTruckId = null;
+        $this->refreshTruck();
+    }
 
     public function viewTripFromBook(int $tripId): void
     {
@@ -264,7 +271,8 @@ class ViewTruck extends Component
 
     public function editTruck()
     {
-        return redirect()->route('trucks.edit', $this->truckId);
+        $this->editingTruckId = $this->truck->id;
+        $this->dispatch('showEditTruckModal');
     }
 
     public function deleteTruck()
@@ -324,6 +332,7 @@ class ViewTruck extends Component
         return view('livewire.admin.truck.view-truck', [
             'stats' => $this->stats,
             'historyRows' => $this->historyRows,
+            'editingTruckId' => $this->editingTruckId,
         ]);
     }
 

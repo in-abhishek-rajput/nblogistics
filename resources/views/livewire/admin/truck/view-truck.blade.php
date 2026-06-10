@@ -212,4 +212,30 @@
             });
         });
     </script>
+
+    {{-- Edit Truck Modal --}}
+    <div wire:ignore.self class="modal fade" id="editTruckModal" tabindex="-1" aria-labelledby="editTruckModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTruckModalLabel">Edit Truck</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if ($editingTruckId)
+                        <livewire:admin.truck.edit-truck :truck-id="$editingTruckId" :key="'edit-truck-' . $editingTruckId" />
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @script
+    <script>
+        window.addEventListener('showEditTruckModal', () => {
+            const modal = new bootstrap.Modal(document.getElementById('editTruckModal'));
+            modal.show();
+        });
+    </script>
+    @endscript
 </div>
