@@ -78,6 +78,10 @@
                             $openEvent = true;
                             $eventName = 'openFuelBookPanel';
                         }
+                        if (isset($card['openTripBook']) && $card['openTripBook']) {
+                            $openEvent = true;
+                            $eventName = 'openTripBookPanel';
+                        }
                     @endphp
                     <div class="col-auto">
                         @if ($openEvent)
@@ -105,6 +109,7 @@
 
     <livewire:admin.truck.emi-book :truck-id="$truck->id" />
     <livewire:admin.truck.fuel-book :truck-id="$truck->id" />
+    <livewire:admin.truck.trip-book :truck-id="$truck->id" />
 
     {{-- HISTORY TABLE --}}
     <div class="card border-0 shadow-sm" style="border-radius:12px;">
@@ -136,6 +141,17 @@
                                                 style="width:32px;height:32px;padding:0;"
                                                 wire:click="viewTrip({{ $row['id'] }})">
                                                 <i class="bi bi-eye-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="$dispatch('openTripBookOffcanvas'); $dispatch('editTrip', {{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this trip?') || event.stopImmediatePropagation()"
+                                                wire:click="$dispatch('openTripBookOffcanvas'); $dispatch('deleteTrip', {{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
                                             </button>
                                         @elseif ($row['type'] === 'fuel')
                                             <button type="button" class="btn btn-sm btn-outline-primary rounded"

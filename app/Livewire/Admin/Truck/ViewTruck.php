@@ -167,7 +167,7 @@ class ViewTruck extends Component
     }
 
     public array $activityCards = [
-        ['label' => 'Trip Book', 'icon' => 'bi-truck', 'iconColor' => '#3b6fd4', 'href' => '#'],
+        ['label' => 'Trip Book', 'icon' => 'bi-truck', 'iconColor' => '#3b6fd4', 'href' => '#', 'openTripBook' => true],
         ['label' => 'Fuel Book', 'icon' => 'bi-droplet-fill', 'iconColor' => '#e67e22', 'href' => '#', 'openFuelBook' => true],
         ['label' => 'EMI Book', 'icon' => 'bi-receipt', 'iconColor' => '#e74c3c', 'href' => '#', 'openEmiBook' => true],
         ['label' => 'Documents', 'icon' => 'bi-person-badge', 'iconColor' => '#27ae60', 'href' => '#'],
@@ -180,7 +180,15 @@ class ViewTruck extends Component
         'truckUpdated' => 'refreshTruck',
         'emiBookUpdated' => 'refreshTruck',
         'fuelBookUpdated' => 'refreshTruck',
+        'tripBookUpdated' => 'refreshTruck',
+        'viewTripFromBook' => 'viewTripFromBook',
     ];
+
+    public function viewTripFromBook(int $tripId): void
+    {
+        $this->viewingTripId = $tripId;
+        $this->dispatch('showViewTripOffcanvas');
+    }
 
     public function mount(int $truckId)
     {
