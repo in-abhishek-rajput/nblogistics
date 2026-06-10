@@ -129,11 +129,6 @@
             <div class="mt-4">
                 {{ $fuelExpenses->links('vendor.pagination.bootstrap-5') }}
             </div>
-
-            <button type="button" class="btn btn-primary position-absolute end-0 bottom-0 m-4 px-4 py-2"
-                wire:click="showAddFuelExpenseModal">
-                + Add Fuel Expense
-            </button>
         </div>
     </div>
 

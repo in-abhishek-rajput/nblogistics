@@ -33,6 +33,7 @@ class ViewTruck extends Component
     ];
 
     public $truck;
+    public ?int $viewingTripId = null;
 
     public function getTotalRevenueProperty()
     {
@@ -92,6 +93,8 @@ class ViewTruck extends Component
 
             $rows = $rows->concat($tripQuery->orderByDesc('start_date')->get()->map(function ($trip) {
                 return [
+                    'type' => 'trip',
+                    'id' => $trip->id,
                     'date' => $trip->start_date?->format('d M Y') ?? '-',
                     'reason' => 'Trip: ' . ($trip->material_name ?? 'Trip'),
                     'expense' => '',
@@ -111,6 +114,8 @@ class ViewTruck extends Component
 
             $rows = $rows->concat($emiQuery->orderByDesc('payment_date')->get()->map(function ($payment) {
                 return [
+                    'type' => 'emi',
+                    'id' => $payment->id,
                     'date' => $payment->payment_date?->format('d M Y') ?? '-',
                     'reason' => 'EMI Payment',
                     'expense' => '₹ ' . number_format($payment->amount, 2),
@@ -128,6 +133,8 @@ class ViewTruck extends Component
 
             $rows = $rows->concat($fuelQuery->orderByDesc('expense_date')->get()->map(function ($expense) {
                 return [
+                    'type' => 'fuel',
+                    'id' => $expense->id,
                     'date' => $expense->expense_date?->format('d M Y') ?? '-',
                     'reason' => 'Fuel Expense',
                     'expense' => '₹ ' . number_format($expense->expense_amount, 2),
@@ -198,6 +205,49 @@ class ViewTruck extends Component
         $truck->delete();
 
         return redirect()->route('trucks.index');
+    }
+
+    public function viewTrip(int $tripId): void
+    {
+        $this->viewingTripId = $tripId;
+        $this->dispatch('showViewTripOffcanvas');
+    }
+
+    public function editFuelExpense(int $expenseId): void
+    {
+        $this->dispatch('openFuelBookOffcanvas');
+        $this->dispatch('editFuelExpense', $expenseId);
+    }
+
+    public function deleteFuelExpense(int $expenseId): void
+    {
+        if (!$this->confirmDeletion()) {
+            return;
+        }
+
+        $this->dispatch('openFuelBookOffcanvas');
+        $this->dispatch('deleteFuelExpense', $expenseId);
+    }
+
+    public function editEmiPayment(int $paymentId): void
+    {
+        $this->dispatch('openEmiBookOffcanvas');
+        $this->dispatch('editEmiPayment', $paymentId);
+    }
+
+    public function deleteEmiPayment(int $paymentId): void
+    {
+        if (!$this->confirmDeletion()) {
+            return;
+        }
+
+        $this->dispatch('openEmiBookOffcanvas');
+        $this->dispatch('deleteEmiPayment', $paymentId);
+    }
+
+    protected function confirmDeletion(): bool
+    {
+        return true;
     }
 
     public function render()

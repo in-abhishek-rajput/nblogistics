@@ -131,21 +131,46 @@
                                 <td style="font-size:.85rem;">{{ $row['revenue'] ?? '' }}</td>
                                 <td>
                                     <div class="d-flex gap-2">
-                                        <button type="button" class="btn btn-sm btn-outline-primary rounded"
-                                            style="width:32px;height:32px;padding:0;">
-                                            <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger rounded"
-                                            style="width:32px;height:32px;padding:0;">
-                                            <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
-                                        </button>
+                                        @if ($row['type'] === 'trip')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="viewTrip({{ $row['id'] }})">
+                                                <i class="bi bi-eye-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @elseif ($row['type'] === 'fuel')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="editFuelExpense({{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this fuel expense?') || event.stopImmediatePropagation()"
+                                                wire:click="deleteFuelExpense({{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @elseif ($row['type'] === 'emi')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="editEmiPayment({{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this EMI payment?') || event.stopImmediatePropagation()"
+                                                wire:click="deleteEmiPayment({{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @else
+                                            <span class="text-muted small">N/A</span>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="5" class="text-center py-4 text-muted">
-                                    No EMI history available yet.
+                                    No history records found for the selected period.
                                 </td>
                             </tr>
                         @endforelse
@@ -154,4 +179,30 @@
             </div>
         </div>
     </div>
+
+    <div wire:ignore.self class="offcanvas offcanvas-end" tabindex="-1" id="viewTripOffcanvas" aria-labelledby="viewTripOffcanvasLabel" style="width: 80%;">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="viewTripOffcanvasLabel">Trip View</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            @if ($viewingTripId)
+                <livewire:admin.trip.view-trip :trip-id="$viewingTripId" :key="'view-trip-' . $viewingTripId" />
+            @endif
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const viewTripCanvasEl = document.getElementById('viewTripOffcanvas');
+            if (!viewTripCanvasEl) {
+                return;
+            }
+            const viewTripOffcanvas = new bootstrap.Offcanvas(viewTripCanvasEl);
+
+            window.addEventListener('showViewTripOffcanvas', () => {
+                viewTripOffcanvas.show();
+            });
+        });
+    </script>
 </div>
