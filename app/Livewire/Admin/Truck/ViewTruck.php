@@ -36,13 +36,27 @@ class ViewTruck extends Component
 
     public function getTotalRevenueProperty()
     {
-        return (float) $this->truck->trips()->sum('freight_amount');
+        $query = $this->truck->trips();
+        if ($range = $this->getDateRange()) {
+            $query->whereBetween('start_date', $range);
+        }
+
+        return (float) $query->sum('freight_amount');
     }
 
     public function getTotalExpensesProperty()
     {
-        $emiExpenses = (float) $this->truck->truckEmiPayments()->where('truck_emi_payments.status', 'paid')->sum('amount');
-        $fuelExpenses = (float) $this->truck->truckFuelExpenses()->sum('expense_amount');
+        $emiQuery = $this->truck->truckEmiPayments()
+            ->where('truck_emi_payments.status', 'paid');
+        $fuelQuery = $this->truck->truckFuelExpenses();
+
+        if ($range = $this->getDateRange()) {
+            $emiQuery->whereBetween('payment_date', $range);
+            $fuelQuery->whereBetween('expense_date', $range);
+        }
+
+        $emiExpenses = (float) $emiQuery->sum('amount');
+        $fuelExpenses = (float) $fuelQuery->sum('expense_amount');
 
         return $emiExpenses + $fuelExpenses;
     }
@@ -67,11 +81,35 @@ class ViewTruck extends Component
 
     public function getHistoryRowsProperty()
     {
-        $emiRows = $this->truck->truckEmiPayments()
-            ->where('truck_emi_payments.status', 'paid')
-            ->orderByDesc('payment_date')
-            ->get()
-            ->map(function ($payment) {
+        $range = $this->getDateRange();
+        $rows = collect();
+
+        if (in_array($this->activityFilter, ['all', 'trips'], true)) {
+            $tripQuery = $this->truck->trips();
+            if ($range) {
+                $tripQuery->whereBetween('start_date', $range);
+            }
+
+            $rows = $rows->concat($tripQuery->orderByDesc('start_date')->get()->map(function ($trip) {
+                return [
+                    'date' => $trip->start_date?->format('d M Y') ?? '-',
+                    'reason' => 'Trip: ' . ($trip->material_name ?? 'Trip'),
+                    'expense' => '',
+                    'revenue' => '₹ ' . number_format($trip->freight_amount, 2),
+                    'sortDate' => $trip->start_date,
+                ];
+            }));
+        }
+
+        if (in_array($this->activityFilter, ['all', 'emi'], true)) {
+            $emiQuery = $this->truck->truckEmiPayments()
+                ->where('truck_emi_payments.status', 'paid');
+
+            if ($range) {
+                $emiQuery->whereBetween('payment_date', $range);
+            }
+
+            $rows = $rows->concat($emiQuery->orderByDesc('payment_date')->get()->map(function ($payment) {
                 return [
                     'date' => $payment->payment_date?->format('d M Y') ?? '-',
                     'reason' => 'EMI Payment',
@@ -79,12 +117,16 @@ class ViewTruck extends Component
                     'revenue' => '',
                     'sortDate' => $payment->payment_date,
                 ];
-            });
+            }));
+        }
 
-        $fuelRows = $this->truck->truckFuelExpenses()
-            ->orderByDesc('expense_date')
-            ->get()
-            ->map(function ($expense) {
+        if (in_array($this->activityFilter, ['all', 'fuel'], true)) {
+            $fuelQuery = $this->truck->truckFuelExpenses();
+            if ($range) {
+                $fuelQuery->whereBetween('expense_date', $range);
+            }
+
+            $rows = $rows->concat($fuelQuery->orderByDesc('expense_date')->get()->map(function ($expense) {
                 return [
                     'date' => $expense->expense_date?->format('d M Y') ?? '-',
                     'reason' => 'Fuel Expense',
@@ -92,16 +134,29 @@ class ViewTruck extends Component
                     'revenue' => '',
                     'sortDate' => $expense->expense_date,
                 ];
-            });
+            }));
+        }
 
-        return $emiRows->concat($fuelRows)
-            ->sortByDesc(fn ($row) => $row['sortDate'] ?? Carbon::minValue())
+        return $rows->sortByDesc(fn ($row) => $row['sortDate'] ?? Carbon::minValue())
             ->map(function ($row) {
                 unset($row['sortDate']);
                 return $row;
             })
             ->values()
             ->toArray();
+    }
+
+    protected function getDateRange()
+    {
+        $today = Carbon::today();
+
+        return match ($this->monthFilter) {
+            'current' => [$today->copy()->startOfMonth(), $today->copy()->endOfMonth()],
+            'previous' => [$today->copy()->subMonth()->startOfMonth(), $today->copy()->subMonth()->endOfMonth()],
+            'three' => [$today->copy()->subMonths(3)->startOfMonth(), $today->copy()->endOfMonth()],
+            'six' => [$today->copy()->subMonths(6)->startOfMonth(), $today->copy()->endOfMonth()],
+            default => null,
+        };
     }
 
     public array $activityCards = [

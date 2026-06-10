@@ -1,7 +1,7 @@
 <div>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.css" />
     
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="fuelBookOffcanvas" aria-labelledby="fuelBookOffcanvasLabel"
+    <div wire:ignore.self class="offcanvas offcanvas-end" tabindex="-1" id="fuelBookOffcanvas" aria-labelledby="fuelBookOffcanvasLabel"
         style="width:500px;">
         <div class="offcanvas-header border-bottom py-3 px-4">
             <div>
@@ -93,10 +93,13 @@
                                             <div class="fw-semibold">₹ {{ number_format($expense->expense_amount, 2) }}</div>
                                         </div>
                                     </div>
-                                    @if ($expense->bill_file)
+                                    @if ($expense->bill_file && Storage::disk('public')->exists($expense->bill_file))
+                                        @php
+                                            $billUrl = asset('storage/' . $expense->bill_file);
+                                        @endphp
                                         <div class="mb-3" data-lightbox="fuel-bills-{{ $expense->id }}">
-                                            <a href="{{ Storage::disk('public')->url($expense->bill_file) }}" data-lightbox="fuel-bills-{{ $expense->id }}" class="d-inline-block">
-                                                <img src="{{ Storage::disk('public')->url($expense->bill_file) }}" alt="Bill" class="img-thumbnail" style="max-width: 100px; max-height: 100px; object-fit: cover; cursor: pointer;">
+                                            <a href="{{ $billUrl }}" data-lightbox="fuel-bills-{{ $expense->id }}" class="d-inline-block">
+                                                <img src="{{ $billUrl }}" alt="Bill" class="img-thumbnail" style="max-width: 100px; max-height: 100px; object-fit: cover; cursor: pointer;">
                                             </a>
                                         </div>
                                     @endif
@@ -171,21 +174,30 @@
                 }
             });
 
-            // Initialize lightgallery for file previews
-            if (typeof lightGallery !== 'undefined') {
-                document.addEventListener('DOMContentLoaded', () => {
-                    const lgElements = document.querySelectorAll('[data-lightbox]');
-                    lgElements.forEach(el => {
-                        if (el.classList && !el.classList.contains('lg-initialized')) {
-                            lightGallery(el, {
-                                selector: 'img',
-                                plugins: [],
-                            });
-                            el.classList.add('lg-initialized');
-                        }
-                    });
+            function initFuelLightGallery() {
+                if (typeof lightGallery === 'undefined') {
+                    return;
+                }
+
+                const lgElements = document.querySelectorAll('[data-lightbox]');
+                lgElements.forEach(el => {
+                    if (!el.classList.contains('lg-initialized')) {
+                        lightGallery(el, {
+                            selector: 'img',
+                            plugins: [],
+                        });
+                        el.classList.add('lg-initialized');
+                    }
                 });
             }
+
+            document.addEventListener('DOMContentLoaded', initFuelLightGallery);
+            window.addEventListener('livewire:update', () => {
+                initFuelLightGallery();
+                if (fuelCanvasEl.classList.contains('show')) {
+                    fuelOffcanvas.show();
+                }
+            });
         </script>
     @endscript
 
