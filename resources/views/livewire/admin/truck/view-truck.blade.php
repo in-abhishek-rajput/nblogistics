@@ -122,6 +122,7 @@
                             <th class="fw-semibold" style="font-size:.82rem;">Reason</th>
                             <th class="fw-semibold" style="font-size:.82rem;">Expenses</th>
                             <th class="fw-semibold" style="font-size:.82rem;">Revenue</th>
+                            <th class="fw-semibold" style="font-size:.82rem;">Profit</th>
                             <th class="fw-semibold" style="font-size:.82rem;">Action</th>
                         </tr>
                     </thead>
@@ -134,6 +135,7 @@
                                     {{ $row['expense'] ?? '' }}
                                 </td>
                                 <td style="font-size:.85rem;">{{ $row['revenue'] ?? '' }}</td>
+                                <td style="font-size:.85rem;">{{ $row['profit'] ?? '' }}</td>
                                 <td>
                                     <div class="d-flex gap-2">
                                         @if ($row['type'] === 'trip')
@@ -185,7 +187,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">
+                                <td colspan="6" class="text-center py-4 text-muted">
                                     No history records found for the selected period.
                                 </td>
                             </tr>

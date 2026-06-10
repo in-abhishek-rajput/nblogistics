@@ -308,7 +308,7 @@ class TripBook extends Component
 
     public function viewTrip(int $tripId): void
     {
-        $this->dispatch('viewTripFromBook', $tripId)->to(\App\Livewire\Admin\Truck\ViewTruck::class);
+        $this->dispatch('viewTripFromBook', tripId: $tripId)->to(\App\Livewire\Admin\Truck\ViewTruck::class);
     }
 
     protected function tripValidationRules(): array
@@ -337,6 +337,7 @@ class TripBook extends Component
     public function getTripsProperty()
     {
         return $this->tripsQuery()
+            ->with('party')
             ->orderByDesc('start_date')
             ->paginate($this->perPage);
     }

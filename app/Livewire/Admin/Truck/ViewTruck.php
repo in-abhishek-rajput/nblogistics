@@ -42,7 +42,21 @@ class ViewTruck extends Component
             $query->whereBetween('start_date', $range);
         }
 
-        return (float) $query->sum('freight_amount');
+        $trips = $query->with('charges')->get();
+        $totalFreight = (float) $trips->sum('freight_amount');
+        
+        $totalCharges = 0;
+        foreach ($trips as $trip) {
+            foreach ($trip->charges as $charge) {
+                if ($charge->charge_direction === 'add_to_bill') {
+                    $totalCharges += $charge->amount;
+                } elseif ($charge->charge_direction === 'reduce_from_bill') {
+                    $totalCharges -= $charge->amount;
+                }
+            }
+        }
+
+        return $totalFreight + $totalCharges;
     }
 
     public function getTotalExpensesProperty()
@@ -59,7 +73,22 @@ class ViewTruck extends Component
         $emiExpenses = (float) $emiQuery->sum('amount');
         $fuelExpenses = (float) $fuelQuery->sum('expense_amount');
 
-        return $emiExpenses + $fuelExpenses;
+        // Add trip expenses and advances
+        $tripQuery = $this->truck->trips();
+        if ($range) {
+            $tripQuery->whereBetween('start_date', $range);
+        }
+        
+        $tripExpenses = 0;
+        $advancesTotal = 0;
+        
+        $trips = $tripQuery->with(['expenses', 'advances'])->get();
+        foreach ($trips as $trip) {
+            $tripExpenses += $trip->expenses->sum('amount');
+            $advancesTotal += $trip->advances->sum('amount');
+        }
+
+        return $emiExpenses + $fuelExpenses + $tripExpenses + $advancesTotal;
     }
 
     public function getTotalProfitProperty()
@@ -69,13 +98,16 @@ class ViewTruck extends Component
 
     public function getStatsProperty()
     {
+        $tripRevenue = $this->totalRevenue;
+        $tripExpenses = $this->totalExpenses;
+        
         return [
-            ['label' => 'Trip Revenue', 'value' => '₹ ' . number_format($this->totalRevenue, 2)],
-            ['label' => 'Total Expenses', 'value' => '₹ ' . number_format($this->totalExpenses, 2)],
+            ['label' => 'Trip Revenue', 'value' => '₹ ' . number_format($tripRevenue, 2)],
+            ['label' => 'Total Expenses', 'value' => '₹ ' . number_format($tripExpenses, 2)],
             [
                 'label' => 'Total Profit',
-                'value' => '₹ ' . number_format($this->totalProfit, 2),
-                'negative' => $this->totalProfit < 0,
+                'value' => '₹ ' . number_format($tripRevenue - $tripExpenses, 2),
+                'negative' => ($tripRevenue - $tripExpenses) < 0,
             ],
         ];
     }
@@ -91,14 +123,31 @@ class ViewTruck extends Component
                 $tripQuery->whereBetween('start_date', $range);
             }
 
-            $rows = $rows->concat($tripQuery->orderByDesc('start_date')->get()->map(function ($trip) {
+            $rows = $rows->concat($tripQuery->with(['expenses', 'charges', 'advances', 'payments'])->orderByDesc('start_date')->get()->map(function ($trip) {
+                $expenseTotal = $trip->expenses->sum('amount');
+                $totalPayments = $trip->payments->sum('amount');
+                
+                $chargesTotal = 0;
+                foreach ($trip->charges as $charge) {
+                    if ($charge->charge_direction === 'add_to_bill') {
+                        $chargesTotal += $charge->amount;
+                    } elseif ($charge->charge_direction === 'reduce_from_bill') {
+                        $chargesTotal -= $charge->amount;
+                    }
+                }
+                
+                $advancesTotal = $trip->advances->sum('amount');
+                $pendingFreight = $trip->freight_amount - $advancesTotal - $totalPayments + $chargesTotal;
+                $profit = $pendingFreight - $expenseTotal;
+                
                 return [
                     'type' => 'trip',
                     'id' => $trip->id,
                     'date' => $trip->start_date?->format('d M Y') ?? '-',
-                    'reason' => 'Trip: ' . ($trip->material_name ?? 'Trip'),
-                    'expense' => '',
-                    'revenue' => '₹ ' . number_format($trip->freight_amount, 2),
+                    'reason' => ($trip->origin ?? '') . ' → ' . ($trip->destination ?? ''),
+                    'expense' => '₹ ' . number_format($expenseTotal + $advancesTotal, 2),
+                    'revenue' => '₹ ' . number_format($pendingFreight + $expenseTotal + $totalPayments - $chargesTotal, 2),
+                    'profit' => '₹ ' . number_format($profit, 2),
                     'sortDate' => $trip->start_date,
                 ];
             }));
