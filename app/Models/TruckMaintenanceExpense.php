@@ -6,26 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class TripExpense extends Model
+class TruckMaintenanceExpense extends Model
 {
     use SoftDeletes;
 
     protected $fillable = [
-        'expense_category',
         'truck_id',
-        'trip_id',
         'expense_type',
         'amount',
         'expense_date',
         'payment_mode',
-        'current_km_reading',
-        'expense_image',
         'shop_name',
         'driver_id',
         'driver_name',
         'transaction_id',
-        'add_to_party_bill',
+        'current_km_reading',
         'notes',
+        'expense_image',
+        'due_date',
+        'status',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -34,14 +33,9 @@ class TripExpense extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'expense_date' => 'date',
-        'add_to_party_bill' => 'boolean',
+        'due_date' => 'date',
         'current_km_reading' => 'integer',
     ];
-
-    public function trip(): BelongsTo
-    {
-        return $this->belongsTo(Trip::class);
-    }
 
     public function truck(): BelongsTo
     {

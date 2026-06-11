@@ -76,6 +76,22 @@ class ViewTruck extends Component
         $emiExpenses = (float) $emiQuery->sum('amount');
         $fuelExpenses = (float) $fuelQuery->sum('expense_amount');
 
+        $documentQuery = $this->truck->truckDocuments()
+            ->where('expense_amount', '>', 0);
+        $driverExpenseQuery = $this->truck->truckDriverExpenses();
+        $maintenanceQuery = $this->truck->truckMaintenanceExpenses()
+            ->where('status', 'completed');
+
+        if ($range) {
+            $documentQuery->whereBetween('expense_date', $range);
+            $driverExpenseQuery->whereBetween('expense_date', $range);
+            $maintenanceQuery->whereBetween('expense_date', $range);
+        }
+
+        $documentExpenses = (float) $documentQuery->sum('expense_amount');
+        $driverExpenses = (float) $driverExpenseQuery->sum('amount');
+        $maintenanceExpenses = (float) $maintenanceQuery->sum('amount');
+
         // Add trip expenses and advances
         $tripQuery = $this->truck->trips();
         if ($range) {
@@ -91,7 +107,7 @@ class ViewTruck extends Component
             $advancesTotal += $trip->advances->sum('amount');
         }
 
-        return $emiExpenses + $fuelExpenses + $tripExpenses + $advancesTotal;
+        return $emiExpenses + $fuelExpenses + $documentExpenses + $driverExpenses + $maintenanceExpenses + $tripExpenses + $advancesTotal;
     }
 
     public function getTotalProfitProperty()
@@ -206,6 +222,67 @@ class ViewTruck extends Component
             }));
         }
 
+        if (in_array($this->activityFilter, ['all', 'documents'], true)) {
+            $documentQuery = $this->truck->truckDocuments()
+                ->where('expense_amount', '>', 0);
+
+            if ($range) {
+                $documentQuery->whereBetween('expense_date', $range);
+            }
+
+            $rows = $rows->concat($documentQuery->orderByDesc('expense_date')->get()->map(function ($document) {
+                return [
+                    'type' => 'document',
+                    'id' => $document->id,
+                    'date' => $document->expense_date?->format('d M Y') ?? '-',
+                    'reason' => $document->document_name . ' Renewal',
+                    'expense' => '₹ ' . number_format($document->expense_amount, 2),
+                    'revenue' => '',
+                    'sortDate' => $document->expense_date,
+                ];
+            }));
+        }
+
+        if (in_array($this->activityFilter, ['all', 'driver_expenses'], true)) {
+            $driverQuery = $this->truck->truckDriverExpenses();
+            if ($range) {
+                $driverQuery->whereBetween('expense_date', $range);
+            }
+
+            $rows = $rows->concat($driverQuery->orderByDesc('expense_date')->get()->map(function ($expense) {
+                return [
+                    'type' => 'driver_expense',
+                    'id' => $expense->id,
+                    'date' => $expense->expense_date?->format('d M Y') ?? '-',
+                    'reason' => $expense->expense_type,
+                    'expense' => '₹ ' . number_format($expense->amount, 2),
+                    'revenue' => '',
+                    'sortDate' => $expense->expense_date,
+                ];
+            }));
+        }
+
+        if (in_array($this->activityFilter, ['all', 'maintenance'], true)) {
+            $maintenanceQuery = $this->truck->truckMaintenanceExpenses()
+                ->where('status', 'completed');
+
+            if ($range) {
+                $maintenanceQuery->whereBetween('expense_date', $range);
+            }
+
+            $rows = $rows->concat($maintenanceQuery->orderByDesc('expense_date')->get()->map(function ($expense) {
+                return [
+                    'type' => 'maintenance',
+                    'id' => $expense->id,
+                    'date' => $expense->expense_date?->format('d M Y') ?? '-',
+                    'reason' => $expense->expense_type ?: 'Maintenance Expense',
+                    'expense' => '₹ ' . number_format($expense->amount, 2),
+                    'revenue' => '',
+                    'sortDate' => $expense->expense_date,
+                ];
+            }));
+        }
+
         return $rows->sortByDesc(fn ($row) => $row['sortDate'] ?? Carbon::minValue())
             ->map(function ($row) {
                 unset($row['sortDate']);
@@ -232,9 +309,9 @@ class ViewTruck extends Component
         ['label' => 'Trip Book', 'icon' => 'bi-truck', 'iconColor' => '#3b6fd4', 'href' => '#', 'openTripBook' => true],
         ['label' => 'Fuel Book', 'icon' => 'bi-droplet-fill', 'iconColor' => '#e67e22', 'href' => '#', 'openFuelBook' => true],
         ['label' => 'EMI Book', 'icon' => 'bi-receipt', 'iconColor' => '#e74c3c', 'href' => '#', 'openEmiBook' => true],
-        ['label' => 'Documents', 'icon' => 'bi-person-badge', 'iconColor' => '#27ae60', 'href' => '#'],
-        ['label' => 'Maintenance Book', 'icon' => 'bi-tools', 'iconColor' => '#7f8c8d', 'href' => '#'],
-        ['label' => 'Driver & Other expenses', 'icon' => 'bi-person-circle', 'iconColor' => '#8e44ad', 'href' => '#'],
+        ['label' => 'Documents', 'icon' => 'bi-person-badge', 'iconColor' => '#27ae60', 'href' => '#', 'openDocumentBook' => true],
+        ['label' => 'Maintenance Book', 'icon' => 'bi-tools', 'iconColor' => '#7f8c8d', 'href' => '#', 'openMaintenanceBook' => true],
+        ['label' => 'Driver & Other expenses', 'icon' => 'bi-person-circle', 'iconColor' => '#8e44ad', 'href' => '#', 'openDriverExpenseBook' => true],
         ['label' => 'Diesel Card', 'icon' => 'bi-credit-card-2-front', 'iconColor' => '#16a085', 'href' => '#'],
     ];
 
@@ -243,6 +320,9 @@ class ViewTruck extends Component
         'emiBookUpdated' => 'refreshTruck',
         'fuelBookUpdated' => 'refreshTruck',
         'tripBookUpdated' => 'refreshTruck',
+        'documentBookUpdated' => 'refreshTruck',
+        'driverExpenseBookUpdated' => 'refreshTruck',
+        'maintenanceBookUpdated' => 'refreshTruck',
         'viewTripFromBook' => 'viewTripFromBook',
     ];
 
@@ -320,6 +400,54 @@ class ViewTruck extends Component
 
         $this->dispatch('openEmiBookOffcanvas');
         $this->dispatch('deleteEmiPayment', $paymentId);
+    }
+
+    public function editDocument(int $documentId): void
+    {
+        $this->dispatch('openDocumentBookOffcanvas');
+        $this->dispatch('editDocument', $documentId);
+    }
+
+    public function deleteDocument(int $documentId): void
+    {
+        if (!$this->confirmDeletion()) {
+            return;
+        }
+
+        $this->dispatch('openDocumentBookOffcanvas');
+        $this->dispatch('deleteDocument', $documentId);
+    }
+
+    public function editDriverExpense(int $expenseId): void
+    {
+        $this->dispatch('openDriverExpenseBookOffcanvas');
+        $this->dispatch('editDriverExpense', $expenseId);
+    }
+
+    public function deleteDriverExpense(int $expenseId): void
+    {
+        if (!$this->confirmDeletion()) {
+            return;
+        }
+
+        $this->dispatch('openDriverExpenseBookOffcanvas');
+        $this->dispatch('deleteDriverExpense', $expenseId);
+    }
+
+    public function editMaintenanceExpense(int $expenseId): void
+    {
+        $this->dispatch('openMaintenanceBookOffcanvas');
+        $this->dispatch('editMaintenanceExpense', $expenseId);
+    }
+
+    public function deleteMaintenanceExpense(int $expenseId): void
+    {
+        if (!$this->confirmDeletion()) {
+            return;
+        }
+
+        $this->dispatch('openMaintenanceBookOffcanvas');
+        $this->dispatch('deleteMaintenanceExpense', $expenseId);
     }
 
     protected function confirmDeletion(): bool

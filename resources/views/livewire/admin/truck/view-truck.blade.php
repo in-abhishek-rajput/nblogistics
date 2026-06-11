@@ -82,6 +82,18 @@
                             $openEvent = true;
                             $eventName = 'openTripBookPanel';
                         }
+                        if (isset($card['openDocumentBook']) && $card['openDocumentBook']) {
+                            $openEvent = true;
+                            $eventName = 'openDocumentBookPanel';
+                        }
+                        if (isset($card['openMaintenanceBook']) && $card['openMaintenanceBook']) {
+                            $openEvent = true;
+                            $eventName = 'openMaintenanceBookPanel';
+                        }
+                        if (isset($card['openDriverExpenseBook']) && $card['openDriverExpenseBook']) {
+                            $openEvent = true;
+                            $eventName = 'openDriverExpenseBookPanel';
+                        }
                     @endphp
                     <div class="col-auto">
                         @if ($openEvent)
@@ -107,6 +119,9 @@
         </div>
     </div>
 
+    <livewire:admin.truck.document-book :truck-id="$truck->id" />
+    <livewire:admin.truck.driver-other-expense-book :truck-id="$truck->id" />
+    <livewire:admin.truck.maintenance-book :truck-id="$truck->id" />
     <livewire:admin.truck.emi-book :truck-id="$truck->id" />
     <livewire:admin.truck.fuel-book :truck-id="$truck->id" />
     <livewire:admin.truck.trip-book :truck-id="$truck->id" />
@@ -166,6 +181,42 @@
                                                 style="width:32px;height:32px;padding:0;"
                                                 onclick="confirm('Delete this EMI payment?') || event.stopImmediatePropagation()"
                                                 wire:click="deleteEmiPayment({{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @elseif ($row['type'] === 'document')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="editDocument({{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this document record?') || event.stopImmediatePropagation()"
+                                                wire:click="deleteDocument({{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @elseif ($row['type'] === 'driver_expense')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="editDriverExpense({{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this expense?') || event.stopImmediatePropagation()"
+                                                wire:click="deleteDriverExpense({{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @elseif ($row['type'] === 'maintenance')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="editMaintenanceExpense({{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this maintenance record?') || event.stopImmediatePropagation()"
+                                                wire:click="deleteMaintenanceExpense({{ $row['id'] }})">
                                                 <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
                                             </button>
                                         @else
