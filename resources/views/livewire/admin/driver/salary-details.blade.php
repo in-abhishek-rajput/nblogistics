@@ -1,5 +1,4 @@
 <div class="position-relative">
-    <div class="d-print-none">
         <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="mb-0">Salary Details: {{ $driver->name }}</h4>
@@ -110,11 +109,6 @@
                         @endif
                     </div>
                     
-                    <div class="mt-3 text-center">
-                        <button type="button" class="btn btn-outline-primary w-100" onclick="window.print()">
-                            <i class="bi bi-printer me-2"></i> Print Salary Slip
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -160,104 +154,4 @@
             </div>
         </div>
     </div>
-
-    {{-- PRINT LAYOUT (Hidden on screen) --}}
-    <div class="print-only-layout text-dark">
-        <div class="text-center mb-4">
-            <h2 class="mb-1 fw-bold text-uppercase" style="letter-spacing: 1px;">NB Logistics</h2>
-            <h5 class="text-muted mb-0">Salary Slip - {{ $monthName }}</h5>
-        </div>
-
-        <div class="row mb-4">
-            <div class="col-6">
-                <p class="mb-1"><strong>Driver Name:</strong> {{ $driver->name }}</p>
-                <p class="mb-1"><strong>Mobile:</strong> {{ $driver->mobile ?: 'N/A' }}</p>
-            </div>
-            <div class="col-6 text-end">
-                <p class="mb-1"><strong>Date Generated:</strong> {{ now()->format('d M, Y') }}</p>
-                <p class="mb-1"><strong>Status:</strong> {{ $salaryRecord && $salaryRecord->status === 'PAID' ? 'PAID' : 'PENDING' }}</p>
-            </div>
-        </div>
-
-        <table class="table table-bordered border-dark mb-4 print-table">
-            <thead class="table-light text-center">
-                <tr>
-                    <th colspan="2" class="text-uppercase bg-light">Earnings & Deductions Summary</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Base Salary (Monthly)</td>
-                    <td class="text-end fw-bold">₹{{ number_format($driver->base_salary, 2) }}</td>
-                </tr>
-                <tr>
-                    <td>Paid Days / Total Days</td>
-                    <td class="text-end fw-bold">{{ $attendanceSummary['present'] + $attendanceSummary['holiday'] }} / {{ $attendanceSummary['total'] }}</td>
-                </tr>
-                <tr>
-                    <td class="bg-light"><strong>Gross Salary</strong></td>
-                    <td class="text-end bg-light"><strong>₹{{ number_format($salaryRecord ? $salaryRecord->gross_salary : $previewGross, 2) }}</strong></td>
-                </tr>
-                <tr>
-                    <td>Advance Deductions</td>
-                    <td class="text-end text-danger fw-bold">-₹{{ number_format($totalAdvances, 2) }}</td>
-                </tr>
-                <tr>
-                    <td class="bg-light fs-5"><strong>Net Payable Amount</strong></td>
-                    <td class="text-end bg-light fs-5"><strong>₹{{ number_format($salaryRecord ? $salaryRecord->net_salary : $previewNet, 2) }}</strong></td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="row mt-5 pt-5 text-center signature-section">
-            <div class="col-6">
-                <div class="border-top border-dark mx-4 pt-2 d-inline-block" style="width: 200px;">
-                    <strong>Driver's Signature</strong>
-                </div>
-            </div>
-            <div class="col-6">
-                <div class="border-top border-dark mx-4 pt-2 d-inline-block" style="width: 200px;">
-                    <strong>Manager's Signature</strong>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        .print-only-layout {
-            display: none !important;
-        }
-
-        @media print {
-            body {
-                background-color: white !important;
-                color: black !important;
-                margin: 0;
-                padding: 0;
-            }
-            /* Force hide all standard UI elements */
-            .sidebar, .navbar, .footer, .d-print-none, .main-header, .topbar {
-                display: none !important;
-            }
-            .print-only-layout {
-                display: block !important;
-                width: 100%;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-            }
-            .print-table th, .print-table td {
-                border-color: #333 !important;
-                padding: 12px 15px;
-            }
-            .print-table .bg-light {
-                background-color: #f8f9fa !important;
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact;
-            }
-            .signature-section {
-                page-break-inside: avoid;
-            }
-        }
-    </style>
 </div>

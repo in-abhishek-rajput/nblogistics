@@ -6,11 +6,11 @@
 @section('content')
 
     <nav class="navbar navbar-expand bg-light navbar-light sticky-top px-4 py-2">
-        <a href="{{ route('drivers.index') }}" class="btn btn-outline-secondary me-3">
-            <i class="bi bi-arrow-left"></i> Back to Drivers
-        </a>
         <a href="#" class="navbar-brand d-flex me-4">
             <h1 class="mb-0 fs-5">Driver Attendance</h1>
+        </a>
+        <a href="{{ route('drivers.index') }}" class="btn btn-outline-secondary ms-auto">
+            <i class="bi bi-arrow-left"></i> Back to Drivers
         </a>
     </nav>
     

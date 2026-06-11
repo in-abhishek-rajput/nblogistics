@@ -30,4 +30,12 @@ class ReportsController extends Controller
     {
         return view('admin.reports.drivers');
     }
+
+    /**
+     * Show the parties report.
+     */
+    public function parties()
+    {
+        return view('admin.reports.parties');
+    }
 }
