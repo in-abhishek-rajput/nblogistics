@@ -70,6 +70,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('reports/trips', [ReportsController::class, 'trips'])->name('reports.trips');
     Route::get('reports/trucks', [ReportsController::class, 'trucks'])->name('reports.trucks');
     Route::get('reports/drivers', [ReportsController::class, 'drivers'])->name('reports.drivers');
+    Route::get('reports/parties', [ReportsController::class, 'parties'])->name('reports.parties');
     
     // Trip Expenses
     Route::get('trip-expenses', function () {

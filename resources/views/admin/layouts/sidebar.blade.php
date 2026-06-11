@@ -29,6 +29,7 @@
                     <li><a class="dropdown-item" href="{{ route('reports.trips') }}">Trips Report</a></li>
                     <li><a class="dropdown-item" href="{{ route('reports.trucks') }}">Trucks Report</a></li>
                     <li><a class="dropdown-item" href="{{ route('reports.drivers') }}">Drivers Report</a></li>
+                    <li><a class="dropdown-item" href="{{ route('reports.parties') }}">Parties Report</a></li>
                 </ul>
             </div>
             <a href="{{ route('profile.index') }}" class="nav-item nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}"><i class="fa fa-id-card me-2"></i>Profile</a>
