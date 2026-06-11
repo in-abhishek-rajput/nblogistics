@@ -23,7 +23,7 @@
     <div class="row g-3 align-items-end mb-4">
         <div class="col-auto">
             <label class="form-label small mb-1 text-muted">Date</label>
-            <select wire:model="monthFilter" class="form-select form-select-sm" style="min-width:140px;">
+            <select wire:model.live="monthFilter" class="form-select form-select-sm" style="min-width:140px;">
                 @foreach ($monthOptions as $key => $label)
                     <option value="{{ $key }}">{{ $label }}</option>
                 @endforeach
@@ -31,7 +31,7 @@
         </div>
         <div class="col-auto">
             <label class="form-label small mb-1 text-muted">Filter</label>
-            <select wire:model="activityFilter" class="form-select form-select-sm" style="min-width:180px;">
+            <select wire:model.live="activityFilter" class="form-select form-select-sm" style="min-width:180px;">
                 @foreach ($activityOptions as $key => $label)
                     <option value="{{ $key }}">{{ $label }}</option>
                 @endforeach
@@ -67,10 +67,32 @@
         <div class="card-body py-3">
             <div class="row g-2 justify-content-center justify-content-md-start text-center">
                 @foreach ($activityCards as $card)
+                    @php
+                        $openEvent = false;
+                        $eventName = null;
+                        if (isset($card['openEmiBook']) && $card['openEmiBook']) {
+                            $openEvent = true;
+                            $eventName = 'openEmiBookPanel';
+                        }
+                        if (isset($card['openFuelBook']) && $card['openFuelBook']) {
+                            $openEvent = true;
+                            $eventName = 'openFuelBookPanel';
+                        }
+                        if (isset($card['openTripBook']) && $card['openTripBook']) {
+                            $openEvent = true;
+                            $eventName = 'openTripBookPanel';
+                        }
+                    @endphp
                     <div class="col-auto">
-                        <a href="{{ $card['href'] }}"
-                            class="d-flex flex-column align-items-center text-decoration-none text-dark px-3 py-1"
-                            style="min-width:80px;">
+                        @if ($openEvent)
+                            <a href="#" wire:click.prevent="$dispatch('{{ $eventName }}')"
+                                class="d-flex flex-column align-items-center text-decoration-none text-dark px-3 py-1"
+                                style="min-width:80px;">
+                        @else
+                            <a href="{{ $card['href'] }}"
+                                class="d-flex flex-column align-items-center text-decoration-none text-dark px-3 py-1"
+                                style="min-width:80px;">
+                        @endif
                             <div class="mb-2 d-flex align-items-center justify-content-center rounded-circle"
                                 style="width:54px;height:54px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.08);">
                                 <i class="bi {{ $card['icon'] }} fs-4"
@@ -85,6 +107,10 @@
         </div>
     </div>
 
+    <livewire:admin.truck.emi-book :truck-id="$truck->id" />
+    <livewire:admin.truck.fuel-book :truck-id="$truck->id" />
+    <livewire:admin.truck.trip-book :truck-id="$truck->id" />
+
     {{-- HISTORY TABLE --}}
     <div class="card border-0 shadow-sm" style="border-radius:12px;">
         <div class="card-body p-0">
@@ -96,11 +122,12 @@
                             <th class="fw-semibold" style="font-size:.82rem;">Reason</th>
                             <th class="fw-semibold" style="font-size:.82rem;">Expenses</th>
                             <th class="fw-semibold" style="font-size:.82rem;">Revenue</th>
+                            <th class="fw-semibold" style="font-size:.82rem;">Profit</th>
                             <th class="fw-semibold" style="font-size:.82rem;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($historyRows as $row)
+                        @forelse ($historyRows as $row)
                             <tr class="{{ $loop->even ? '' : 'bg-light' }}" style="border-bottom:1px solid #f0f0f0;">
                                 <td class="ps-4 fw-semibold" style="font-size:.85rem;">{{ $row['date'] }}</td>
                                 <td style="font-size:.85rem;">{{ $row['reason'] }}</td>
@@ -108,23 +135,107 @@
                                     {{ $row['expense'] ?? '' }}
                                 </td>
                                 <td style="font-size:.85rem;">{{ $row['revenue'] ?? '' }}</td>
+                                <td style="font-size:.85rem;">{{ $row['profit'] ?? '' }}</td>
                                 <td>
                                     <div class="d-flex gap-2">
-                                        <button type="button" class="btn btn-sm btn-outline-primary rounded"
-                                            style="width:32px;height:32px;padding:0;">
-                                            <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger rounded"
-                                            style="width:32px;height:32px;padding:0;">
-                                            <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
-                                        </button>
+                                        @if ($row['type'] === 'trip')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="viewTrip({{ $row['id'] }})">
+                                                <i class="bi bi-eye-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @elseif ($row['type'] === 'fuel')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="editFuelExpense({{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this fuel expense?') || event.stopImmediatePropagation()"
+                                                wire:click="deleteFuelExpense({{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @elseif ($row['type'] === 'emi')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="editEmiPayment({{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this EMI payment?') || event.stopImmediatePropagation()"
+                                                wire:click="deleteEmiPayment({{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @else
+                                            <span class="text-muted small">N/A</span>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    No history records found for the selected period.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <div wire:ignore.self class="offcanvas offcanvas-end" tabindex="-1" id="viewTripOffcanvas" aria-labelledby="viewTripOffcanvasLabel" style="width: 80%;">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="viewTripOffcanvasLabel">Trip View</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            @if ($viewingTripId)
+                <livewire:admin.trip.view-trip :trip-id="$viewingTripId" :key="'view-trip-' . $viewingTripId" />
+            @endif
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const viewTripCanvasEl = document.getElementById('viewTripOffcanvas');
+            if (!viewTripCanvasEl) {
+                return;
+            }
+            const viewTripOffcanvas = new bootstrap.Offcanvas(viewTripCanvasEl);
+
+            window.addEventListener('showViewTripOffcanvas', () => {
+                viewTripOffcanvas.show();
+            });
+        });
+    </script>
+
+    {{-- Edit Truck Modal --}}
+    <div wire:ignore.self class="modal fade" id="editTruckModal" tabindex="-1" aria-labelledby="editTruckModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTruckModalLabel">Edit Truck</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if ($editingTruckId)
+                        <livewire:admin.truck.edit-truck :truck-id="$editingTruckId" :key="'edit-truck-' . $editingTruckId" />
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @script
+    <script>
+        window.addEventListener('showEditTruckModal', () => {
+            const modal = new bootstrap.Modal(document.getElementById('editTruckModal'));
+            modal.show();
+        });
+    </script>
+    @endscript
 </div>

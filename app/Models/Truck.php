@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\TruckFuelExpense;
 
 class Truck extends Model
 {
@@ -91,5 +93,33 @@ class Truck extends Model
     public function trips(): HasMany
     {
         return $this->hasMany(Trip::class);
+    }
+
+    /**
+     * Relationship with Truck EMIs.
+     */
+    public function truckEmis(): HasMany
+    {
+        return $this->hasMany(TruckEmi::class);
+    }
+
+    /**
+     * Relationship with Truck EMI payments through the EMI master record.
+     */
+    public function truckEmiPayments(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            TruckEmiPayment::class,
+            TruckEmi::class,
+            'truck_id',
+            'truck_emi_id',
+            'id',
+            'id'
+        );
+    }
+
+    public function truckFuelExpenses(): HasMany
+    {
+        return $this->hasMany(TruckFuelExpense::class, 'truck_id');
     }
 }
