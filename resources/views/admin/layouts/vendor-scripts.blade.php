@@ -21,6 +21,67 @@
  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
  <script>
+    window.showTruckBookModal = function(modalId) {
+        const modalEl = document.getElementById(modalId);
+        if (!modalEl || typeof bootstrap === 'undefined') {
+            return null;
+        }
+
+        const pausedOffcanvases = [];
+        const disabledBackdrops = [];
+        document.querySelectorAll('.offcanvas.show').forEach(function (offcanvasEl) {
+            offcanvasEl.setAttribute('inert', '');
+            const instance = bootstrap.Offcanvas.getInstance(offcanvasEl);
+            if (instance && instance._focustrap) {
+                instance._focustrap.deactivate();
+                pausedOffcanvases.push({ el: offcanvasEl, trap: instance._focustrap });
+            }
+        });
+        document.querySelectorAll('.offcanvas-backdrop.show').forEach(function (backdropEl) {
+            backdropEl.style.pointerEvents = 'none';
+            disabledBackdrops.push(backdropEl);
+        });
+
+        const onHidden = function () {
+            pausedOffcanvases.forEach(function (item) {
+                item.el.removeAttribute('inert');
+                if (item.trap && typeof item.trap.activate === 'function') {
+                    item.trap.activate();
+                }
+            });
+            disabledBackdrops.forEach(function (backdropEl) {
+                backdropEl.style.pointerEvents = '';
+            });
+            modalEl.removeEventListener('hidden.bs.modal', onHidden);
+        };
+        modalEl.addEventListener('hidden.bs.modal', onHidden);
+
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, { focus: false });
+        modal.show();
+        return modal;
+    };
+
+    window.hideTruckBookModal = function(modalId) {
+        const modalEl = document.getElementById(modalId);
+        if (!modalEl) {
+            return;
+        }
+
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) {
+            modalEl.querySelector(':focus')?.blur();
+            modal.hide();
+        }
+
+        document.querySelectorAll('.offcanvas[inert]').forEach(function (offcanvasEl) {
+            offcanvasEl.removeAttribute('inert');
+            const instance = bootstrap.Offcanvas.getInstance(offcanvasEl);
+            if (instance && instance._focustrap && typeof instance._focustrap.activate === 'function') {
+                instance._focustrap.activate();
+            }
+        });
+    };
+
     // Catch Livewire validation errors globally and display them using SweetAlert
     document.addEventListener('livewire:init', () => {
         Livewire.hook('request', ({ uri, options, payload, respond, succeed, fail }) => {

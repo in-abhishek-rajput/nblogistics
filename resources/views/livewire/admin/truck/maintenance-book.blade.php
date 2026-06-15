@@ -148,16 +148,10 @@
 
             window.addEventListener('openMaintenanceBookOffcanvas', () => maintenanceOffcanvas.show());
             window.addEventListener('showAddMaintenanceModal', () => {
-                new bootstrap.Modal(document.getElementById('addMaintenanceModal')).show();
+                window.showTruckBookModal('addMaintenanceModal');
             });
             window.addEventListener('closeModal', event => {
-                const modalElement = document.getElementById(event.detail);
-                if (!modalElement) return;
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) {
-                    modalElement.querySelector(':focus')?.blur();
-                    modal.hide();
-                }
+                window.hideTruckBookModal(event.detail);
             });
 
             function initMaintenanceLightGallery() {
@@ -170,10 +164,7 @@
             }
 
             document.addEventListener('DOMContentLoaded', initMaintenanceLightGallery);
-            window.addEventListener('livewire:update', () => {
-                initMaintenanceLightGallery();
-                if (maintenanceCanvasEl.classList.contains('show')) maintenanceOffcanvas.show();
-            });
+            window.addEventListener('livewire:update', initMaintenanceLightGallery);
         </script>
     @endscript
 

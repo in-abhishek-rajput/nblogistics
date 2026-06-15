@@ -145,28 +145,15 @@
             });
 
             window.addEventListener('showAddFuelExpenseModal', () => {
-                const modal = new bootstrap.Modal(document.getElementById('addFuelExpenseModal'));
-                modal.show();
+                window.showTruckBookModal('addFuelExpenseModal');
             });
 
             window.addEventListener('showEditFuelExpenseModal', () => {
-                const modal = new bootstrap.Modal(document.getElementById('editFuelExpenseModal'));
-                modal.show();
+                window.showTruckBookModal('editFuelExpenseModal');
             });
 
             window.addEventListener('closeModal', event => {
-                const modalElement = document.getElementById(event.detail);
-                if (!modalElement) {
-                    return;
-                }
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) {
-                    const focusedElement = modalElement.querySelector(':focus');
-                    if (focusedElement) {
-                        focusedElement.blur();
-                    }
-                    modal.hide();
-                }
+                window.hideTruckBookModal(event.detail);
             });
 
             function initFuelLightGallery() {
@@ -187,12 +174,7 @@
             }
 
             document.addEventListener('DOMContentLoaded', initFuelLightGallery);
-            window.addEventListener('livewire:update', () => {
-                initFuelLightGallery();
-                if (fuelCanvasEl.classList.contains('show')) {
-                    fuelOffcanvas.show();
-                }
-            });
+            window.addEventListener('livewire:update', initFuelLightGallery);
         </script>
     @endscript
 

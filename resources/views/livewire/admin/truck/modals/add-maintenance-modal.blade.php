@@ -1,4 +1,4 @@
-<div wire:ignore.self class="modal fade" id="addMaintenanceModal" tabindex="-1" aria-labelledby="addMaintenanceModalLabel" aria-hidden="true">
+<div class="modal fade" id="addMaintenanceModal" tabindex="-1" aria-labelledby="addMaintenanceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
         <div class="modal-content">
             <div class="modal-header border-bottom-0">
@@ -29,7 +29,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Amount Paid *</label>
-                        <input type="number" wire:model.live="amount" class="form-control" required min="0" step="0.01">
+                        <input type="number" wire:model.defer="amount" class="form-control" required min="0" step="0.01">
                         @error('amount') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="mb-3">
@@ -46,18 +46,18 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Expense Date *</label>
-                        <input type="date" wire:model.live="expense_date" class="form-control" required>
+                        <input type="date" wire:model.defer="expense_date" class="form-control" required>
                         @error('expense_date') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Due Date</label>
-                        <input type="date" wire:model.live="due_date" class="form-control">
+                        <input type="date" wire:model.defer="due_date" class="form-control">
                         @error('due_date') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     @if ($payment_mode === 'credit')
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Shop Name *</label>
-                            <input type="text" wire:model.live="shop_name" class="form-control" required>
+                            <input type="text" wire:model.defer="shop_name" class="form-control" required>
                             @error('shop_name') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                     @endif
@@ -84,23 +84,23 @@
                     @if ($payment_mode === 'online')
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Transaction ID *</label>
-                            <input type="text" wire:model.live="transaction_id" class="form-control" required>
+                            <input type="text" wire:model.defer="transaction_id" class="form-control" required>
                             @error('transaction_id') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                     @endif
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Current KM Reading</label>
-                        <input type="number" wire:model.live="current_km_reading" class="form-control" min="0" step="1">
+                        <input type="number" wire:model.defer="current_km_reading" class="form-control" min="0" step="1">
                         @error('current_km_reading') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Notes</label>
-                        <textarea wire:model.live="notes" class="form-control" rows="2"></textarea>
+                        <textarea wire:model.defer="notes" class="form-control" rows="2"></textarea>
                         @error('notes') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Image Upload</label>
-                        <input type="file" wire:model.live="expense_image" class="form-control" accept="image/jpeg,image/png,image/jpg,application/pdf">
+                        <input type="file" wire:model="expense_image" class="form-control" accept="image/jpeg,image/png,image/jpg,application/pdf">
                         @error('expense_image') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>

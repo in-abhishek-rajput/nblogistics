@@ -146,19 +146,11 @@
             });
 
             window.addEventListener('showAddDocumentModal', () => {
-                const modal = new bootstrap.Modal(document.getElementById('addDocumentModal'));
-                modal.show();
+                window.showTruckBookModal('addDocumentModal');
             });
 
             window.addEventListener('closeModal', event => {
-                const modalElement = document.getElementById(event.detail);
-                if (!modalElement) return;
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) {
-                    const focusedElement = modalElement.querySelector(':focus');
-                    if (focusedElement) focusedElement.blur();
-                    modal.hide();
-                }
+                window.hideTruckBookModal(event.detail);
             });
 
             function initDocumentLightGallery() {
@@ -176,12 +168,7 @@
             }
 
             document.addEventListener('DOMContentLoaded', initDocumentLightGallery);
-            window.addEventListener('livewire:update', () => {
-                initDocumentLightGallery();
-                if (documentCanvasEl.classList.contains('show')) {
-                    documentOffcanvas.show();
-                }
-            });
+            window.addEventListener('livewire:update', initDocumentLightGallery);
         </script>
     @endscript
 

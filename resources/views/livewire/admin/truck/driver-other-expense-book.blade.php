@@ -117,16 +117,10 @@
 
             window.addEventListener('openDriverExpenseBookOffcanvas', () => driverExpenseOffcanvas.show());
             window.addEventListener('showAddDriverExpenseModal', () => {
-                new bootstrap.Modal(document.getElementById('addDriverExpenseModal')).show();
+                window.showTruckBookModal('addDriverExpenseModal');
             });
             window.addEventListener('closeModal', event => {
-                const modalElement = document.getElementById(event.detail);
-                if (!modalElement) return;
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) {
-                    modalElement.querySelector(':focus')?.blur();
-                    modal.hide();
-                }
+                window.hideTruckBookModal(event.detail);
             });
 
             function initDriverExpenseLightGallery() {
@@ -139,10 +133,7 @@
             }
 
             document.addEventListener('DOMContentLoaded', initDriverExpenseLightGallery);
-            window.addEventListener('livewire:update', () => {
-                initDriverExpenseLightGallery();
-                if (driverExpenseCanvasEl.classList.contains('show')) driverExpenseOffcanvas.show();
-            });
+            window.addEventListener('livewire:update', initDriverExpenseLightGallery);
         </script>
     @endscript
 
