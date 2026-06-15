@@ -1,13 +1,15 @@
 <div>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
 
-    <div wire:ignore.self class="offcanvas offcanvas-end" tabindex="-1" id="documentBookOffcanvas" aria-labelledby="documentBookOffcanvasLabel"
-        style="width:500px;">
+    <div wire:ignore.self class="offcanvas offcanvas-end" tabindex="-1" id="documentBookOffcanvas"
+        aria-labelledby="documentBookOffcanvasLabel" style="width:500px;">
         <div class="offcanvas-header border-bottom py-3 px-4">
             <div>
                 <h5 class="offcanvas-title fw-bold" id="documentBookOffcanvasLabel">Document Book</h5>
                 <div class="text-muted small mt-1">
-                    {{ $truck->truck_number }} · {{ $types[$truck->truck_type] ?? ucfirst($truck->truck_type) }} · {{ ucfirst($truck->status ?? 'Unknown') }}
+                    {{ $truck->truck_number }} · {{ $types[$truck->truck_type] ?? ucfirst($truck->truck_type) }} ·
+                    {{ ucfirst($truck->status ?? 'Unknown') }}
                 </div>
             </div>
             <button type="button" class="btn-close text-dark" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -32,23 +34,31 @@
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
                                         <div class="fw-semibold">{{ $item['label'] }}</div>
-                                        <span class="badge {{ $statusInfo['class'] }} mt-1" style="font-size:0.68rem;">{{ $statusInfo['label'] }}</span>
+                                        <span class="badge {{ $statusInfo['class'] }} mt-1"
+                                            style="font-size:0.68rem;">{{ $statusInfo['label'] }}</span>
                                         @if ($document?->expiry_date)
-                                            <div class="text-muted small mt-1">Expires: {{ $document->expiry_date->format('d M Y') }}</div>
+                                            <div class="text-muted small mt-1">Expires:
+                                                {{ $document->expiry_date->format('d M Y') }}</div>
                                         @endif
                                     </div>
                                     @if ($document?->document_file && Storage::disk('public')->exists($document->document_file))
                                         @php
                                             $fileUrl = asset('storage/' . $document->document_file);
-                                            $extension = strtolower(pathinfo($document->document_file, PATHINFO_EXTENSION));
+                                            $extension = strtolower(
+                                                pathinfo($document->document_file, PATHINFO_EXTENSION),
+                                            );
                                         @endphp
                                         <div data-lightbox="doc-{{ $item['slug'] }}">
                                             @if (in_array($extension, ['jpg', 'jpeg', 'png'], true))
-                                                <a href="{{ $fileUrl }}" data-src="{{ $fileUrl }}" data-download-url="{{ $fileUrl }}">
-                                                    <img src="{{ $fileUrl }}" alt="{{ $item['label'] }}" class="img-thumbnail" style="width:64px;height:64px;object-fit:cover;cursor:pointer;">
+                                                <a href="{{ $fileUrl }}" data-src="{{ $fileUrl }}"
+                                                    data-download-url="{{ $fileUrl }}">
+                                                    <img src="{{ $fileUrl }}" alt="{{ $item['label'] }}"
+                                                        class="img-thumbnail"
+                                                        style="width:64px;height:64px;object-fit:cover;cursor:pointer;">
                                                 </a>
                                             @else
-                                                <a href="{{ $fileUrl }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    class="btn btn-sm btn-outline-secondary">
                                                     <i class="bi bi-file-earmark-pdf"></i> PDF
                                                 </a>
                                             @endif
@@ -60,7 +70,8 @@
                                         </div>
                                     @endif
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary" wire:click="showEditDefaultDocument('{{ $item['slug'] }}')">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    wire:click="showEditDefaultDocument('{{ $item['slug'] }}')">
                                     {{ $document ? 'Edit Expiry' : 'Add Expiry' }}
                                 </button>
                             </div>
@@ -89,26 +100,35 @@
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <div>
                                             <div class="fw-semibold">{{ $document->document_name }}</div>
-                                            <span class="badge {{ $statusInfo['class'] }} mt-1" style="font-size:0.68rem;">{{ $statusInfo['label'] }}</span>
+                                            <span class="badge {{ $statusInfo['class'] }} mt-1"
+                                                style="font-size:0.68rem;">{{ $statusInfo['label'] }}</span>
                                             @if ($document->expiry_date)
-                                                <div class="text-muted small mt-1">Expires: {{ $document->expiry_date->format('d M Y') }}</div>
+                                                <div class="text-muted small mt-1">Expires:
+                                                    {{ $document->expiry_date->format('d M Y') }}</div>
                                             @endif
                                             @if ($document->expense_amount)
-                                                <div class="text-muted small">Expense: ₹ {{ number_format($document->expense_amount, 2) }}</div>
+                                                <div class="text-muted small">Expense: ₹
+                                                    {{ number_format($document->expense_amount, 2) }}</div>
                                             @endif
                                         </div>
                                         @if ($document->document_file && Storage::disk('public')->exists($document->document_file))
                                             @php
                                                 $fileUrl = asset('storage/' . $document->document_file);
-                                                $extension = strtolower(pathinfo($document->document_file, PATHINFO_EXTENSION));
+                                                $extension = strtolower(
+                                                    pathinfo($document->document_file, PATHINFO_EXTENSION),
+                                                );
                                             @endphp
                                             <div data-lightbox="doc-other-{{ $document->id }}">
                                                 @if (in_array($extension, ['jpg', 'jpeg', 'png'], true))
-                                                    <a href="{{ $fileUrl }}" data-src="{{ $fileUrl }}" data-download-url="{{ $fileUrl }}">
-                                                        <img src="{{ $fileUrl }}" alt="{{ $document->document_name }}" class="img-thumbnail" style="width:64px;height:64px;object-fit:cover;cursor:pointer;">
+                                                    <a href="{{ $fileUrl }}" data-src="{{ $fileUrl }}"
+                                                        data-download-url="{{ $fileUrl }}">
+                                                        <img src="{{ $fileUrl }}"
+                                                            alt="{{ $document->document_name }}" class="img-thumbnail"
+                                                            style="width:64px;height:64px;object-fit:cover;cursor:pointer;">
                                                     </a>
                                                 @else
-                                                    <a href="{{ $fileUrl }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                    <a href="{{ $fileUrl }}" target="_blank"
+                                                        class="btn btn-sm btn-outline-secondary">
                                                         <i class="bi bi-file-earmark-pdf"></i> PDF
                                                     </a>
                                                 @endif
@@ -116,7 +136,8 @@
                                         @endif
                                     </div>
                                     <div class="d-flex flex-wrap gap-2">
-                                        <button type="button" class="btn btn-sm btn-outline-primary" wire:click="editDocument({{ $document->id }})">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                            wire:click="editDocument({{ $document->id }})">Edit</button>
                                         <button type="button" class="btn btn-sm btn-outline-danger"
                                             onclick="confirm('Delete this document?') || event.stopImmediatePropagation()"
                                             wire:click="deleteDocument({{ $document->id }})">Delete</button>
@@ -151,6 +172,17 @@
 
             window.addEventListener('closeModal', event => {
                 window.hideTruckBookModal(event.detail);
+            });
+
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('showAddDocumentModal', () => {
+                    const modalEl = document.getElementById('addDocumentModal');
+                    let modal = bootstrap.Modal.getInstance(modalEl);
+                    if (!modal) {
+                        modal = new bootstrap.Modal(modalEl);
+                    }
+                    modal.show();
+                });
             });
 
             function initDocumentLightGallery() {

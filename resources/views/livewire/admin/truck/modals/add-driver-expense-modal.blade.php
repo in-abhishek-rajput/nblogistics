@@ -1,4 +1,4 @@
-<div class="modal fade" id="addDriverExpenseModal" tabindex="-1" aria-labelledby="addDriverExpenseModalLabel" aria-hidden="true">
+<div wire:ignore.self class="modal fade" id="addDriverExpenseModal" tabindex="-1" aria-labelledby="addDriverExpenseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
         <div class="modal-content">
             <div class="modal-header border-bottom-0">
