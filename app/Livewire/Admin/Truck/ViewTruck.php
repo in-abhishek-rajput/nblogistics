@@ -324,6 +324,7 @@ class ViewTruck extends Component
         'driverExpenseBookUpdated' => 'refreshTruck',
         'maintenanceBookUpdated' => 'refreshTruck',
         'viewTripFromBook' => 'viewTripFromBook',
+        'openMonthlyReportPanel' => 'openMonthlyReport',
     ];
 
     public function onTruckUpdated(): void
@@ -336,6 +337,11 @@ class ViewTruck extends Component
     {
         $this->viewingTripId = $tripId;
         $this->dispatch('showViewTripOffcanvas');
+    }
+
+    public function openMonthlyReport(): void
+    {
+        $this->dispatch('openMonthlyReportOffcanvas')->to(MonthlyReport::class);
     }
 
     public function mount(int $truckId)

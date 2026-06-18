@@ -38,8 +38,9 @@
             </select>
         </div>
         <div class="col text-end">
-            <button type="button" class="btn btn-primary btn-sm px-4 py-2 fw-semibold">
-                <i class="bi bi-file-earmark-bar-graph me-2"></i>Monthly Reports
+            <button type="button" class="btn btn-primary btn-sm px-4 py-2 fw-semibold"
+                wire:click="$dispatch('openMonthlyReportPanel')">
+                <i class="bi bi-file-earmark-bar-graph me-2"></i>Monthly P&L Report
             </button>
         </div>
     </div>
@@ -125,6 +126,7 @@
     <livewire:admin.truck.emi-book :truck-id="$truck->id" />
     <livewire:admin.truck.fuel-book :truck-id="$truck->id" />
     <livewire:admin.truck.trip-book :truck-id="$truck->id" />
+    <livewire:admin.truck.monthly-report :truck-id="$truck->id" />
 
     {{-- HISTORY TABLE --}}
     <div class="card border-0 shadow-sm" style="border-radius:12px;">
@@ -250,19 +252,21 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const viewTripCanvasEl = document.getElementById('viewTripOffcanvas');
-            if (!viewTripCanvasEl) {
-                return;
-            }
-            const viewTripOffcanvas = new bootstrap.Offcanvas(viewTripCanvasEl);
+    @script
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const viewTripCanvasEl = document.getElementById('viewTripOffcanvas');
+                if (!viewTripCanvasEl) {
+                    return;
+                }
+                const viewTripOffcanvas = new bootstrap.Offcanvas(viewTripCanvasEl);
 
-            window.addEventListener('showViewTripOffcanvas', () => {
-                viewTripOffcanvas.show();
+                window.addEventListener('showViewTripOffcanvas', () => {
+                    viewTripOffcanvas.show();
+                });
             });
-        });
-    </script>
+        </script>
+    @endscript
 
     {{-- Edit Truck Modal --}}
     <div wire:ignore.self class="modal fade" id="editTruckModal" tabindex="-1" aria-labelledby="editTruckModalLabel" aria-hidden="true">
@@ -282,11 +286,11 @@
     </div>
 
     @script
-    <script>
-        window.addEventListener('showEditTruckModal', () => {
-            const modal = new bootstrap.Modal(document.getElementById('editTruckModal'));
-            modal.show();
-        });
-    </script>
+        <script>
+            window.addEventListener('showEditTruckModal', () => {
+                const modal = new bootstrap.Modal(document.getElementById('editTruckModal'));
+                modal.show();
+            });
+        </script>
     @endscript
 </div>
