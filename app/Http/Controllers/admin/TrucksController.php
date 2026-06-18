@@ -4,96 +4,134 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Truck;
+use App\Models\Trip;
+use App\Models\TruckEmiPayment;
+use App\Models\TruckFuelExpense;
+use App\Models\TruckDocument;
+use App\Models\TruckMaintenanceExpense;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TrucksController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $total_trucks = Truck::all()->count();
-        $total_self_trucks = Truck::where('ownership', 'self')->count();
+        $total_trucks        = Truck::all()->count();
+        $total_self_trucks   = Truck::where('ownership', 'self')->count();
         $total_market_trucks = Truck::where('ownership', 'market')->count();
+
         return view('admin.truck.list', compact('total_trucks', 'total_self_trucks', 'total_market_trucks'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+    public function create() {}
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+    public function store(Request $request) {}
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         return view('admin.truck.view', ['truckId' => $id]);
     }
 
     /**
-     * Generate Monthly Profit & Loss Report PDF/HTML.
+     * Monthly P&L PDF Download.
+     *
+     * Route: GET /trucks/{truck}/monthly-report-pdf?month=6&year=2025
+     *
+     * Calculation logic — ViewTruck.php se exact match:
+     *
+     * REVENUE:
+     *   getTotalRevenueProperty() → trips->freight_amount + charges (add/reduce)
+     *
+     * EXPENSES:
+     *   getTotalExpensesProperty() →
+     *     emi         : truckEmiPayments() status=paid
+     *     fuel        : truckFuelExpenses()
+     *     document    : truckDocuments() expense_amount > 0
+     *     driver      : truckDriverExpenses()          ← alag relationship, koi category filter nahi
+     *     maintenance : truckMaintenanceExpenses() status=completed
+     *     trip exp    : trip->expenses->sum('amount')  ← ALL expenses, koi category filter nahi
+     *     advances    : trip->advances->sum('amount')
      */
-    public function monthlyReportPdf(string $truck, string $month = null, string $year = null)
+    public function monthlyReportPdf(Request $request, int $truck)
     {
-        $truckModel = \App\Models\Truck::with('driver')->findOrFail($truck);
-        $monthValue = $month ?? now()->month;
-        $yearValue = $year ?? now()->year;
+        // month/year query string se (MonthlyReport livewire downloadPdf() se aate hain)
+        $monthValue = (int) ($request->query('month') ?: now()->month);
+        $yearValue  = (int) ($request->query('year')  ?: now()->year);
+
+        $truckModel = Truck::with('driver')->findOrFail($truck);
 
         $months = [
-            1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
-            5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+            1 => 'January',   2 => 'February', 3 => 'March',    4 => 'April',
+            5 => 'May',       6 => 'June',      7 => 'July',     8 => 'August',
             9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December',
         ];
 
         $types = config('truck.types');
 
-        $totalTripsStarted = \App\Models\Trip::where('truck_id', $truckModel->id)
-            ->whereYear('start_date', $yearValue)
-            ->whereMonth('start_date', $monthValue)
+        // Date range — ViewTruck ke getDateRange() jaisa (startOfMonth → endOfMonth)
+        $startDate = \Illuminate\Support\Carbon::createFromDate($yearValue, $monthValue, 1)->startOfMonth();
+        $endDate   = $startDate->copy()->endOfMonth();
+        $range     = [$startDate, $endDate];
+
+        // ── Summary Stats ──────────────────────────────────────────────────
+
+        $totalTripsStarted = Trip::where('truck_id', $truckModel->id)
+            ->whereBetween('start_date', $range)
             ->count();
 
-        $tripEndKm = \App\Models\Trip::where('truck_id', $truckModel->id)
-            ->whereYear('start_date', $yearValue)
-            ->whereMonth('start_date', $monthValue)
+        $tripEndKm = Trip::where('truck_id', $truckModel->id)
+            ->whereBetween('start_date', $range)
             ->whereNotNull('end_km')
             ->max('end_km');
 
-        $fuelKm = \App\Models\TruckFuelExpense::where('truck_id', $truckModel->id)
-            ->whereYear('expense_date', $yearValue)
-            ->whereMonth('expense_date', $monthValue)
+        $fuelKm = TruckFuelExpense::where('truck_id', $truckModel->id)
+            ->whereBetween('expense_date', $range)
             ->whereNotNull('current_km_reading')
             ->max('current_km_reading');
 
         $lastTripKmReading = max($tripEndKm ?: 0, $fuelKm ?: 0);
 
-        $totalRefuelQuantity = (float) \App\Models\TruckFuelExpense::where('truck_id', $truckModel->id)
-            ->whereYear('expense_date', $yearValue)
-            ->whereMonth('expense_date', $monthValue)
+        $totalRefuelQuantity = (float) TruckFuelExpense::where('truck_id', $truckModel->id)
+            ->whereBetween('expense_date', $range)
             ->sum('fuel_quantity');
 
-        $trips = \App\Models\Trip::where('truck_id', $truckModel->id)
-            ->whereYear('start_date', $yearValue)
-            ->whereMonth('start_date', $monthValue)
-            ->where('status', 'completed')
+        // ── Revenue ────────────────────────────────────────────────────────
+        // ViewTruck: getTotalRevenueProperty()
+        //   $this->truck->trips() → whereBetween start_date → with charges
+        //   totalFreight + charges (add_to_bill / reduce_from_bill)
+
+        $trips = $truckModel->trips()
+            ->whereBetween('start_date', $range)
             ->with(['charges'])
             ->orderBy('start_date')
             ->get();
 
         $revenueData = $trips->map(function ($trip) {
-            $totalCharges = 0;
+            $freight      = (float) $trip->freight_amount;
+            $chargesTotal = 0;
+
+            foreach ($trip->charges as $charge) {
+                if ($charge->charge_direction === 'add_to_bill') {
+                    $chargesTotal += $charge->amount;
+                } elseif ($charge->charge_direction === 'reduce_from_bill') {
+                    $chargesTotal -= $charge->amount;
+                }
+            }
+
+            return [
+                'id'             => $trip->id,
+                'date'           => $trip->start_date?->format('d M') ?? '-',
+                'route'          => ($trip->origin ?? '') . ' → ' . ($trip->destination ?? ''),
+                'freight_amount' => $freight,
+                'charges'        => $chargesTotal,
+                'total'          => $freight + $chargesTotal,
+            ];
+        })->toArray();
+
+        // totalRevenue — same trips collection reuse
+        $totalFreight = (float) $trips->sum('freight_amount');
+        $totalCharges = 0;
+        foreach ($trips as $trip) {
             foreach ($trip->charges as $charge) {
                 if ($charge->charge_direction === 'add_to_bill') {
                     $totalCharges += $charge->amount;
@@ -101,178 +139,180 @@ class TrucksController extends Controller
                     $totalCharges -= $charge->amount;
                 }
             }
-            return [
-                'id' => $trip->id,
-                'date' => $trip->start_date?->format('d M') ?? '-',
-                'route' => ($trip->origin ?? '') . ' → ' . ($trip->destination ?? ''),
-                'freight_amount' => (float) $trip->freight_amount,
-                'charges' => (float) $totalCharges,
-            ];
-        })->toArray();
-
-        $totalRevenue = (float) $trips->sum('freight_amount') + $trips->sum(fn ($trip) => $trip->charges->sum('amount'));
-
-        $expensesData = [];
-        $tripIds = \App\Models\Trip::where('truck_id', $truckModel->id)
-            ->whereYear('start_date', $yearValue)
-            ->whereMonth('start_date', $monthValue)
-            ->pluck('id');
-
-        $fuelExpenses = \App\Models\TruckFuelExpense::where('truck_id', $truckModel->id)
-            ->whereYear('expense_date', $yearValue)
-            ->whereMonth('expense_date', $monthValue)
-            ->orderBy('expense_date')
-            ->get();
-        foreach ($fuelExpenses as $expense) {
-            $expensesData['fuel'][] = [
-                'date' => $expense->expense_date?->format('d M') ?? '-',
-                'type' => 'Fuel Expense',
-                'amount' => (float) $expense->expense_amount,
-            ];
         }
+        $totalRevenue = $totalFreight + $totalCharges;
 
-        $emiExpenses = \App\Models\TruckEmiPayment::whereHas('emi', fn ($q) => $q->where('truck_id', $truckModel->id))
-            ->whereYear('payment_date', $yearValue)
-            ->whereMonth('payment_date', $monthValue)
-            ->where('status', 'paid')
-            ->orderBy('payment_date')
-            ->get();
-        foreach ($emiExpenses as $expense) {
-            $expensesData['emi'][] = [
-                'date' => $expense->payment_date?->format('d M') ?? '-',
-                'type' => 'EMI Payment',
-                'amount' => (float) $expense->amount,
-            ];
-        }
+        // ── Expenses ───────────────────────────────────────────────────────
+        // ViewTruck: getTotalExpensesProperty()
+        // Sabhi queries model relationships se — same as ViewTruck
 
-        $driverExpenses = \App\Models\TripExpense::where('truck_id', $truckModel->id)
-            ->where('expense_category', 'truck')
-            ->whereYear('expense_date', $yearValue)
-            ->whereMonth('expense_date', $monthValue)
-            ->orderBy('expense_date')
-            ->get();
-        foreach ($driverExpenses as $expense) {
-            $expensesData['driver'][] = [
-                'date' => $expense->expense_date?->format('d M') ?? '-',
-                'type' => $expense->expense_type ?? 'Driver Expense',
-                'amount' => (float) $expense->amount,
-            ];
-        }
+        // EMI — truckEmiPayments() status=paid, payment_date range
+        $emiQuery = $truckModel->truckEmiPayments()
+            ->where('truck_emi_payments.status', 'paid')
+            ->whereBetween('payment_date', $range);
 
-        $maintenanceExpenses = \App\Models\TruckMaintenanceExpense::where('truck_id', $truckModel->id)
-            ->where('status', 'completed')
-            ->whereYear('expense_date', $yearValue)
-            ->whereMonth('expense_date', $monthValue)
-            ->orderBy('expense_date')
-            ->get();
-        foreach ($maintenanceExpenses as $expense) {
-            $expensesData['maintenance'][] = [
-                'date' => $expense->expense_date?->format('d M') ?? '-',
-                'type' => $expense->expense_type ?? 'Maintenance',
-                'amount' => (float) $expense->amount,
-            ];
-        }
+        $emiTotal    = (float) $emiQuery->sum('amount');
+        $emiRows     = $emiQuery->orderBy('payment_date')->get();
 
-        $documentExpenses = \App\Models\TruckDocument::where('truck_id', $truckModel->id)
+        // Fuel — truckFuelExpenses(), expense_date range
+        $fuelQuery   = $truckModel->truckFuelExpenses()
+            ->whereBetween('expense_date', $range);
+
+        $fuelTotal   = (float) $fuelQuery->sum('expense_amount');
+        $fuelRows    = $fuelQuery->orderBy('expense_date')->get();
+
+        // Documents — truckDocuments() expense_amount > 0, expense_date range
+        $documentQuery = $truckModel->truckDocuments()
             ->where('expense_amount', '>', 0)
-            ->whereYear('expense_date', $yearValue)
-            ->whereMonth('expense_date', $monthValue)
-            ->orderBy('expense_date')
+            ->whereBetween('expense_date', $range);
+
+        $documentTotal = (float) $documentQuery->sum('expense_amount');
+        $documentRows  = $documentQuery->orderBy('expense_date')->get();
+
+        // Driver & Other — truckDriverExpenses(), expense_date range
+        // ViewTruck mein koi category filter nahi — relationship jo bhi return kare
+        $driverQuery = $truckModel->truckDriverExpenses()
+            ->whereBetween('expense_date', $range);
+
+        $driverTotal = (float) $driverQuery->sum('amount');
+        $driverRows  = $driverQuery->orderBy('expense_date')->get();
+
+        // Maintenance — truckMaintenanceExpenses() status=completed, expense_date range
+        $maintenanceQuery = $truckModel->truckMaintenanceExpenses()
+            ->where('status', 'completed')
+            ->whereBetween('expense_date', $range);
+
+        $maintenanceTotal = (float) $maintenanceQuery->sum('amount');
+        $maintenanceRows  = $maintenanceQuery->orderBy('expense_date')->get();
+
+        // Trip Expenses + Advances
+        // ViewTruck: $trip->expenses->sum('amount') — ALL expenses, koi category filter nahi
+        // ViewTruck: $trip->advances->sum('amount')
+        $tripRows = $truckModel->trips()
+            ->whereBetween('start_date', $range)
+            ->with(['expenses', 'advances'])
             ->get();
-        foreach ($documentExpenses as $expense) {
+
+        $tripExpensesTotal = 0;
+        $advancesTotal     = 0;
+        $tripExpenseRows   = collect();
+        $advanceRows       = collect();
+
+        foreach ($tripRows as $trip) {
+            $tripExpensesTotal += $trip->expenses->sum('amount');
+            $advancesTotal     += $trip->advances->sum('amount');
+            $tripExpenseRows    = $tripExpenseRows->concat($trip->expenses);
+            $advanceRows        = $advanceRows->concat($trip->advances);
+        }
+
+        // ── Total Expenses — ViewTruck jaisa exact ─────────────────────────
+        $totalExpenses = $emiTotal + $fuelTotal + $documentTotal + $driverTotal
+            + $maintenanceTotal + $tripExpensesTotal + $advancesTotal;
+
+        // ── Expenses Display Data (PDF ke liye) ────────────────────────────
+        $expensesData = [];
+
+        foreach ($fuelRows as $e) {
+            $expensesData['fuel'][] = [
+                'date'      => $e->expense_date?->format('d M') ?? '-',
+                'type'      => 'Fuel Expense',
+                'shop_name' => $e->shop_name ?? $e->diesel_pump_name ?? '-',
+                'amount'    => (float) $e->expense_amount,
+                'quantity'  => $e->fuel_quantity
+                    ? number_format($e->fuel_quantity, 2) . ' L'
+                    : null,
+            ];
+        }
+
+        foreach ($emiRows as $e) {
+            $expensesData['emi'][] = [
+                'date'      => $e->payment_date?->format('d M') ?? '-',
+                'type'      => 'EMI Payment',
+                'shop_name' => $e->emi->finance_company ?? '-',
+                'amount'    => (float) $e->amount,
+            ];
+        }
+
+        foreach ($driverRows as $e) {
+            $expensesData['driver'][] = [
+                'date'      => $e->expense_date?->format('d M') ?? '-',
+                'type'      => $e->expense_type ?? 'Driver Expense',
+                'shop_name' => $e->shop_name ?? '-',
+                'amount'    => (float) $e->amount,
+            ];
+        }
+
+        foreach ($maintenanceRows as $e) {
+            $expensesData['maintenance'][] = [
+                'date'      => $e->expense_date?->format('d M') ?? '-',
+                'type'      => $e->expense_type ?? 'Maintenance',
+                'shop_name' => $e->shop_name ?? '-',
+                'amount'    => (float) $e->amount,
+            ];
+        }
+
+        foreach ($documentRows as $e) {
             $expensesData['document'][] = [
-                'date' => $expense->expense_date?->format('d M') ?? '-',
-                'type' => $expense->document_name . ' Renewal',
-                'amount' => (float) $expense->expense_amount,
+                'date'      => $e->expense_date?->format('d M') ?? '-',
+                'type'      => $e->document_name . ' Renewal',
+                'shop_name' => '-',
+                'amount'    => (float) $e->expense_amount,
             ];
         }
 
-        $tripExpenses = \App\Models\TripExpense::whereIn('trip_id', $tripIds)
-            ->where('expense_category', 'trip')
-            ->whereYear('expense_date', $yearValue)
-            ->whereMonth('expense_date', $monthValue)
-            ->orderBy('expense_date')
-            ->get();
-        foreach ($tripExpenses as $expense) {
+        foreach ($tripExpenseRows->sortBy('expense_date') as $e) {
             $expensesData['trip_expense'][] = [
-                'date' => $expense->expense_date?->format('d M') ?? '-',
-                'type' => $expense->expense_type ?? 'Trip Expense',
-                'amount' => (float) $expense->amount,
+                'date'      => $e->expense_date?->format('d M') ?? '-',
+                'type'      => $e->expense_type ?? 'Trip Expense',
+                'shop_name' => $e->shop_name ?? '-',
+                'amount'    => (float) $e->amount,
             ];
         }
 
-        $totalExpenses = (float) (\App\Models\TruckFuelExpense::where('truck_id', $truckModel->id)
-            ->whereYear('expense_date', $yearValue)
-            ->whereMonth('expense_date', $monthValue)
-            ->sum('expense_amount'))
-            + (\App\Models\TruckEmiPayment::whereHas('emi', fn ($q) => $q->where('truck_id', $truckModel->id))
-                ->whereYear('payment_date', $yearValue)
-                ->whereMonth('payment_date', $monthValue)
-                ->where('status', 'paid')
-                ->sum('amount'))
-            + (\App\Models\TripExpense::where('truck_id', $truckModel->id)
-                ->where('expense_category', 'truck')
-                ->whereYear('expense_date', $yearValue)
-                ->whereMonth('expense_date', $monthValue)
-                ->sum('amount'))
-            + (\App\Models\TruckMaintenanceExpense::where('truck_id', $truckModel->id)
-                ->where('status', 'completed')
-                ->whereYear('expense_date', $yearValue)
-                ->whereMonth('expense_date', $monthValue)
-                ->sum('amount'))
-            + (\App\Models\TruckDocument::where('truck_id', $truckModel->id)
-                ->where('expense_amount', '>', 0)
-                ->whereYear('expense_date', $yearValue)
-                ->whereMonth('expense_date', $monthValue)
-                ->sum('expense_amount'))
-            + (\App\Models\TripExpense::whereIn('trip_id', $tripIds)
-                ->where('expense_category', 'trip')
-                ->whereYear('expense_date', $yearValue)
-                ->whereMonth('expense_date', $monthValue)
-                ->sum('amount'))
-            + (\App\Models\TripAdvance::whereIn('trip_id', $tripIds)->sum('amount'));
+        foreach ($advanceRows as $e) {
+            $expensesData['advance'][] = [
+                'date'      => $e->advance_date?->format('d M') ?? '-',
+                'type'      => 'Trip Advance',
+                'shop_name' => $e->given_to ?? '-',
+                'amount'    => (float) $e->amount,
+            ];
+        }
 
+        // ── Profit / Loss ──────────────────────────────────────────────────
         $profitLoss = $totalRevenue - $totalExpenses;
 
-        return view('livewire.admin.truck.monthly-report-pdf', [
-            'truck' => $truckModel,
-            'month' => (int) $monthValue,
-            'year' => (int) $yearValue,
-            'monthLabel' => $months[(int) $monthValue] ?? 'Unknown',
-            'types' => $types,
-            'totalTripsStarted' => $totalTripsStarted,
-            'lastTripKmReading' => $lastTripKmReading ?: 0,
+        // ── PDF ────────────────────────────────────────────────────────────
+        $data = [
+            'truck'               => $truckModel,
+            'month'               => $monthValue,
+            'year'                => $yearValue,
+            'monthLabel'          => $months[$monthValue] ?? 'Unknown',
+            'types'               => $types,
+            'totalTripsStarted'   => $totalTripsStarted,
+            'lastTripKmReading'   => $lastTripKmReading ?: 0,
             'totalRefuelQuantity' => $totalRefuelQuantity,
-            'revenueData' => $revenueData,
-            'totalRevenue' => $totalRevenue,
-            'expensesData' => $expensesData,
-            'totalExpenses' => $totalExpenses,
-            'profitLoss' => $profitLoss,
-            'profitLossLabel' => $profitLoss >= 0 ? 'Profit' : 'Loss',
-        ]);
+            'revenueData'         => $revenueData,
+            'totalRevenue'        => $totalRevenue,
+            'expensesData'        => $expensesData,
+            'totalExpenses'       => $totalExpenses,
+            'profitLoss'          => $profitLoss,
+            'profitLossLabel'     => $profitLoss >= 0 ? 'Profit' : 'Loss',
+        ];
+
+        $pdf = Pdf::loadView('livewire.admin.truck.monthly-report-pdf', $data)
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'monthly-report-'
+            . str_replace('/', '-', $truckModel->truck_number) . '-'
+            . ($months[$monthValue] ?? $monthValue) . '-'
+            . $yearValue . '.pdf';
+
+        return $pdf->download($filename);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+    public function edit(string $id) {}
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+    public function update(Request $request, string $id) {}
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
+    public function destroy(string $id) {}
 }

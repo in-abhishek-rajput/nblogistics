@@ -77,12 +77,12 @@
                                         <div class="text-muted small">{{ $trip['route'] }}</div>
                                     </div>
                                     <div class="text-end">
-                                        <div class="fw-semibold">₹ {{ number_format($trip['freight_amount'], 2) }}</div>
+                                        <div class="fw-semibold">₹ {{ number_format($trip['total'], 2) }}</div>
                                     </div>
                                 </div>
                             @endforeach
                         @else
-                            <div class="text-center text-muted py-3">No completed trips found for selected period.</div>
+                            <div class="text-center text-muted py-3">No trips found for selected period.</div>
                         @endif
                     </div>
                 </div>
@@ -160,9 +160,6 @@
             </div>
 
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-primary flex-fill" wire:click="viewPdf">
-                    <i class="bi bi-eye me-1"></i> View PDF
-                </button>
                 <button type="button" class="btn btn-outline-success flex-fill" onclick="window.open('{{ route('trucks.monthly-report-pdf', ['truck' => $truckId, 'month' => $month, 'year' => $year]) }}', '_blank')">
                     <i class="bi bi-download me-1"></i> Download PDF
                 </button>
