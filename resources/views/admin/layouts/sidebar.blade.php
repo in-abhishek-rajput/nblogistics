@@ -4,14 +4,17 @@
     <nav class="navbar bg-light navbar-light px-1">
         <div class="d-flex align-items-center ms-3 mb-3">
             <div class="position-relative">
-                <img class="rounded-circle" src="img/user.jpg" alt="" style="width: 40px; height: 40px;">
+                @php
+                    $userLogo = auth()->check() ? auth()->user()->logo : null;
+                @endphp
+                <img class="rounded" src="{{ $userLogo ? asset('storage/' . $userLogo) : asset('img/user.jpg') }}" alt="" style="height: 40px; object-fit: cover;">
                 <div
                     class="bg-success rounded-circle border border-2 border-white position-absolute end-0 bottom-0 p-1">
                 </div>
             </div>
             <div class="ms-3">
-                <h6 class="mb-0">Name</h6>
-                <span>9876543210</span>
+                <h6 class="mb-0">{{ auth()->check() ? auth()->user()->name : 'Name' }}</h6>
+                <span>{{ auth()->check() ? auth()->user()->mobile : '---' }}</span>
             </div>
         </div>
         <div class="navbar-nav w-100">

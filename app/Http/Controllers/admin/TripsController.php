@@ -67,4 +67,19 @@ class TripsController extends Controller
     {
         //
     }
+
+    /**
+     * Generate the digital invoice for the trip
+     */
+    public function digitalInvoice(string $id)
+    {
+        $trip = Trip::with(['party', 'truck', 'driver', 'advances', 'charges', 'payments'])->findOrFail($id);
+        
+        $totalAdvances = $trip->advances->sum('amount');
+        $totalCharges = $trip->charges->where('charge_direction', 'add_to_bill')->sum('amount') - $trip->charges->where('charge_direction', 'reduce_from_bill')->sum('amount');
+        $totalPayments = $trip->payments->sum('amount');
+        $pendingBalance = ($trip->freight_amount ?? 0) - $totalAdvances - $totalPayments + $totalCharges;
+
+        return view('admin.trip.digital-invoice', compact('trip', 'totalAdvances', 'totalCharges', 'totalPayments', 'pendingBalance'))->with('autoPrint', true);
+    }
 }

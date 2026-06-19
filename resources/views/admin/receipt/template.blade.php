@@ -414,8 +414,11 @@
 
         <!-- HEADER -->
         <div class="header-section">
+            @php
+                $companyLogo = \App\Models\User::first()->logo ?? null;
+            @endphp
             <div class="header-logo">
-                <img src="{{ asset('img/logo.png') }}" alt="NB Logistics Logo" style="max-width: 110px;">
+                <img src="{{ $companyLogo ? asset('storage/' . $companyLogo) : asset('img/logo.png') }}" alt="NB Logistics Logo" style="max-width: 110px; object-fit: contain;">
             </div>
             <div class="header-company">
                 <div class="company-title">N B LOGISTICS</div>

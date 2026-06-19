@@ -879,6 +879,14 @@
                 <a href="{{ route('trip.documents', ['tripId' => $trip->id, 'step' => 3]) }}" class="btn btn-sm btn-warning">Create Receipt</a>
             </div>
 
+            <div class="border rounded-2 p-2 d-space-b mb-2">
+                <div class="d-row-set text-dark f-14">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    <b>Digital Invoice</b>
+                </div>
+                <a href="{{ route('trips.digital-invoice', ['id' => $trip->id]) }}" target="_blank" class="btn btn-sm btn-info text-white">Print</a>
+            </div>
+
             <div class="border rounded-2 p-2 d-space-b">
                 <div class="d-row-set text-dark f-14">
                     <i class="bi bi-list"></i>

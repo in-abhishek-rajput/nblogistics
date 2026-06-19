@@ -276,8 +276,16 @@
 </head>
 <body>
 
+@php
+    $copies = [
+        'CONSIGNEE COPY : WHITE',
+        'CONSIGNOR COPY : BLUE',
+        'TRANSPORT COPY : YELLOW'
+    ];
+@endphp
 <div class="a4-container">
-    <div class="bilty-wrapper">
+    @foreach($copies as $copyName)
+    <div class="bilty-wrapper" style="{{ !$loop->last ? 'page-break-after: always; margin-bottom: 20mm;' : '' }}">
         
         <!-- Header -->
         <div class="header-section">
@@ -285,9 +293,7 @@
                 <div style="width: 150px;"></div>
                 <div class="text-center" style="font-weight: normal; flex-grow: 1;">SUBJECT TO JAMNAGAR JURISDICTION</div>
                 <div class="copy-type" style="width: 150px;">
-                    CONSIGNEE COPY : WHITE<br>
-                    CONSIGNOR COPY : BLUE<br>
-                    TRANSPORT COPY : YELLOW
+                    {!! $copyName !!}
                 </div>
             </div>
             
@@ -453,10 +459,8 @@
         </table>
 
     </div>
+    @endforeach
 </div>
-
-</body>
-
 @if(!empty($autoPrint))
 <script>
     window.addEventListener('load', function () {
@@ -464,4 +468,5 @@
     });
 </script>
 @endif
+</body>
 </html>

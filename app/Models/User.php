@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'mobile',
         'password',
+        'logo',
         'is_active',
         'logins',
         'last_login_ip',
