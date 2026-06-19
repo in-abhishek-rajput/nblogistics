@@ -122,4 +122,20 @@ class Truck extends Model
     {
         return $this->hasMany(TruckFuelExpense::class, 'truck_id');
     }
+
+    public function truckDocuments(): HasMany
+    {
+        return $this->hasMany(TruckDocument::class, 'truck_id');
+    }
+
+    public function truckDriverExpenses(): HasMany
+    {
+        return $this->hasMany(TripExpense::class, 'truck_id')
+            ->where('expense_category', 'truck');
+    }
+
+    public function truckMaintenanceExpenses(): HasMany
+    {
+        return $this->hasMany(TruckMaintenanceExpense::class, 'truck_id');
+    }
 }

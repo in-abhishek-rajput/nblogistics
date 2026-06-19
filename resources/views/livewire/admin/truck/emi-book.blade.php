@@ -122,38 +122,23 @@
             });
 
             window.addEventListener('showAddEmiModal', () => {
-                const modal = new bootstrap.Modal(document.getElementById('addEmiModal'));
-                modal.show();
+                window.showTruckBookModal('addEmiModal');
             });
 
             window.addEventListener('showEditEmiModal', () => {
-                const modal = new bootstrap.Modal(document.getElementById('editPaymentModal'));
-                modal.show();
+                window.showTruckBookModal('editPaymentModal');
             });
 
             window.addEventListener('showEditEmiPlanModal', () => {
-                const modal = new bootstrap.Modal(document.getElementById('editEmiPlanModal'));
-                modal.show();
+                window.showTruckBookModal('editEmiPlanModal');
             });
 
             window.addEventListener('showViewPaymentModal', () => {
-                const modal = new bootstrap.Modal(document.getElementById('viewPaymentModal'));
-                modal.show();
+                window.showTruckBookModal('viewPaymentModal');
             });
 
             window.addEventListener('closeModal', event => {
-                const modalElement = document.getElementById(event.detail);
-                if (!modalElement) {
-                    return;
-                }
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) {
-                    const focusedElement = modalElement.querySelector(':focus');
-                    if (focusedElement) {
-                        focusedElement.blur();
-                    }
-                    modal.hide();
-                }
+                window.hideTruckBookModal(event.detail);
             });
         </script>
     @endscript

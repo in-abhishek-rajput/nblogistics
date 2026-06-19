@@ -120,34 +120,15 @@
         });
 
         window.addEventListener('showAddTripModal', () => {
-            const modal = new bootstrap.Modal(document.getElementById('addTripModal'));
-            modal.show();
+            window.showTruckBookModal('addTripModal');
         });
 
         window.addEventListener('showEditTripModal', () => {
-            const modal = new bootstrap.Modal(document.getElementById('editTripModal'));
-            modal.show();
+            window.showTruckBookModal('editTripModal');
         });
 
         window.addEventListener('closeModal', event => {
-            const modalElement = document.getElementById(event.detail);
-            if (!modalElement) {
-                return;
-            }
-            const modal = bootstrap.Modal.getInstance(modalElement);
-            if (modal) {
-                const focusedElement = modalElement.querySelector(':focus');
-                if (focusedElement) {
-                    focusedElement.blur();
-                }
-                modal.hide();
-            }
-        });
-
-        document.addEventListener('livewire:update', () => {
-            if (tripCanvasEl.classList.contains('show')) {
-                tripOffcanvas.show();
-            }
+            window.hideTruckBookModal(event.detail);
         });
     </script>
     @endscript

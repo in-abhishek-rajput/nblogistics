@@ -38,8 +38,9 @@
             </select>
         </div>
         <div class="col text-end">
-            <button type="button" class="btn btn-primary btn-sm px-4 py-2 fw-semibold">
-                <i class="bi bi-file-earmark-bar-graph me-2"></i>Monthly Reports
+            <button type="button" class="btn btn-primary btn-sm px-4 py-2 fw-semibold"
+                wire:click="$dispatch('openMonthlyReportPanel')">
+                <i class="bi bi-file-earmark-bar-graph me-2"></i>Monthly P&L Report
             </button>
         </div>
     </div>
@@ -82,6 +83,18 @@
                             $openEvent = true;
                             $eventName = 'openTripBookPanel';
                         }
+                        if (isset($card['openDocumentBook']) && $card['openDocumentBook']) {
+                            $openEvent = true;
+                            $eventName = 'openDocumentBookPanel';
+                        }
+                        if (isset($card['openMaintenanceBook']) && $card['openMaintenanceBook']) {
+                            $openEvent = true;
+                            $eventName = 'openMaintenanceBookPanel';
+                        }
+                        if (isset($card['openDriverExpenseBook']) && $card['openDriverExpenseBook']) {
+                            $openEvent = true;
+                            $eventName = 'openDriverExpenseBookPanel';
+                        }
                     @endphp
                     <div class="col-auto">
                         @if ($openEvent)
@@ -107,9 +120,13 @@
         </div>
     </div>
 
+    <livewire:admin.truck.document-book :truck-id="$truck->id" />
+    <livewire:admin.truck.driver-other-expense-book :truck-id="$truck->id" />
+    <livewire:admin.truck.maintenance-book :truck-id="$truck->id" />
     <livewire:admin.truck.emi-book :truck-id="$truck->id" />
     <livewire:admin.truck.fuel-book :truck-id="$truck->id" />
     <livewire:admin.truck.trip-book :truck-id="$truck->id" />
+    <livewire:admin.truck.monthly-report :truck-id="$truck->id" />
 
     {{-- HISTORY TABLE --}}
     <div class="card border-0 shadow-sm" style="border-radius:12px;">
@@ -168,6 +185,42 @@
                                                 wire:click="deleteEmiPayment({{ $row['id'] }})">
                                                 <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
                                             </button>
+                                        @elseif ($row['type'] === 'document')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="editDocument({{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this document record?') || event.stopImmediatePropagation()"
+                                                wire:click="deleteDocument({{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @elseif ($row['type'] === 'driver_expense')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="editDriverExpense({{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this expense?') || event.stopImmediatePropagation()"
+                                                wire:click="deleteDriverExpense({{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                        @elseif ($row['type'] === 'maintenance')
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                wire:click="editMaintenanceExpense({{ $row['id'] }})">
+                                                <i class="bi bi-pencil-fill" style="font-size:.75rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded"
+                                                style="width:32px;height:32px;padding:0;"
+                                                onclick="confirm('Delete this maintenance record?') || event.stopImmediatePropagation()"
+                                                wire:click="deleteMaintenanceExpense({{ $row['id'] }})">
+                                                <i class="bi bi-trash-fill" style="font-size:.75rem;"></i>
+                                            </button>
                                         @else
                                             <span class="text-muted small">N/A</span>
                                         @endif
@@ -199,19 +252,21 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const viewTripCanvasEl = document.getElementById('viewTripOffcanvas');
-            if (!viewTripCanvasEl) {
-                return;
-            }
-            const viewTripOffcanvas = new bootstrap.Offcanvas(viewTripCanvasEl);
+    @script
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const viewTripCanvasEl = document.getElementById('viewTripOffcanvas');
+                if (!viewTripCanvasEl) {
+                    return;
+                }
+                const viewTripOffcanvas = new bootstrap.Offcanvas(viewTripCanvasEl);
 
-            window.addEventListener('showViewTripOffcanvas', () => {
-                viewTripOffcanvas.show();
+                window.addEventListener('showViewTripOffcanvas', () => {
+                    viewTripOffcanvas.show();
+                });
             });
-        });
-    </script>
+        </script>
+    @endscript
 
     {{-- Edit Truck Modal --}}
     <div wire:ignore.self class="modal fade" id="editTruckModal" tabindex="-1" aria-labelledby="editTruckModalLabel" aria-hidden="true">
@@ -231,11 +286,11 @@
     </div>
 
     @script
-    <script>
-        window.addEventListener('showEditTruckModal', () => {
-            const modal = new bootstrap.Modal(document.getElementById('editTruckModal'));
-            modal.show();
-        });
-    </script>
+        <script>
+            window.addEventListener('showEditTruckModal', () => {
+                const modal = new bootstrap.Modal(document.getElementById('editTruckModal'));
+                modal.show();
+            });
+        </script>
     @endscript
 </div>

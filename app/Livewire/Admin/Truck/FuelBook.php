@@ -67,6 +67,8 @@ class FuelBook extends Component
 
     protected $listeners = [
         'openFuelBookPanel' => 'openPanel',
+        'editFuelExpense' => 'editFuelExpense',
+        'deleteFuelExpense' => 'deleteFuelExpense',
     ];
 
     #[Computed]

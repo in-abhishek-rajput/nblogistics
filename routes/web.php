@@ -72,7 +72,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('reports/trucks', [ReportsController::class, 'trucks'])->name('reports.trucks');
     Route::get('reports/drivers', [ReportsController::class, 'drivers'])->name('reports.drivers');
     Route::get('reports/parties', [ReportsController::class, 'parties'])->name('reports.parties');
-    
+
+    // Monthly Profit & Loss Report PDF
+    Route::get('trucks/{truck}/monthly-report-pdf/{month?}/{year?}', [TrucksController::class, 'monthlyReportPdf'])->name('trucks.monthly-report-pdf');
+
     // Trip Expenses
     Route::get('trip-expenses', function () {
         return view('admin.trip-expenses.list');
