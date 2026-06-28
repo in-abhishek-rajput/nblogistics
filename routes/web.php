@@ -1,17 +1,17 @@
 <?php
 
-use App\Http\Controllers\admin\BiltyController;
-use App\Http\Controllers\admin\Auth\LoginController;
-use App\Http\Controllers\admin\DashboardController;
-use App\Http\Controllers\admin\DriversController;
-use App\Http\Controllers\admin\ExpensesController;
-use App\Http\Controllers\admin\InvoicesController;
-use App\Http\Controllers\admin\PartiesController;
-use App\Http\Controllers\admin\ProfileController;
-use App\Http\Controllers\admin\ReceiptController;
-use App\Http\Controllers\admin\ReportsController;
-use App\Http\Controllers\admin\TripsController;
-use App\Http\Controllers\admin\TrucksController;
+use App\Http\Controllers\Admin\BiltyController;
+use App\Http\Controllers\Admin\Auth\LoginController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DriversController;
+use App\Http\Controllers\Admin\ExpensesController;
+use App\Http\Controllers\Admin\InvoicesController;
+use App\Http\Controllers\Admin\PartiesController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\ReceiptController;
+use App\Http\Controllers\Admin\ReportsController;
+use App\Http\Controllers\Admin\TripsController;
+use App\Http\Controllers\Admin\TrucksController;
 use Illuminate\Support\Facades\Route;
 
 // Authentication Routes (Public - Guest only)

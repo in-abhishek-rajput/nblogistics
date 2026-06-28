@@ -20,3 +20,4 @@ This is a Laravel-based project for logistics and billing management.
 ## Change Log
 - **2026-06-28**: Initialized `understanding.md` to bootstrap the Antigravity IDE rules.
 - **2026-06-28**: Fixed issue with automatic Monthly P&L Report download on the Truck view page. Removed the unconditional iframe rendering in `MonthlyReport` Livewire component that caused the immediate trigger of the PDF download endpoint.
+- **2026-06-28**: Renamed controller folder `admin` to `Admin`, `BuiltyHelper.php` to `BiltyHelper.php`, and `Builty.php` to `Bilty.php` to resolve PSR-4 autoloading standard violations in composer. Fixed namespace references in `routes/web.php` and controller classes.
