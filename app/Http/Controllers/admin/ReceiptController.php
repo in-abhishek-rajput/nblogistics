@@ -43,6 +43,17 @@ class ReceiptController extends Controller
     }
 
     /**
+     * Print the specified resource (Money Receipt).
+     */
+    public function print(string $id)
+    {
+        $trip = \App\Models\Trip::with(['party', 'advances'])->find($id);
+        $document = \App\Models\TripDocument::receipt()->where('trip_id', $id)->first() ?? new \App\Models\TripDocument(['data' => []]);
+
+        return view('admin.receipt.template', compact('trip', 'document'))->with('autoPrint', true);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(string $id)

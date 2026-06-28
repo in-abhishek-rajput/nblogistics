@@ -24,6 +24,7 @@ class MonthlyReport extends Component
 
     public bool $revenueExpanded = true;
     public bool $expensesExpanded = true;
+    public bool $showPdf = false;
 
     protected $listeners = [
         'openMonthlyReportOffcanvas' => 'openPanel',
@@ -392,6 +393,7 @@ class MonthlyReport extends Component
 
     public function viewPdf(): void
     {
+        $this->showPdf = true;
         $this->dispatch('showViewReportPdfModal');
     }
 

@@ -591,10 +591,10 @@ class ViewTrip extends Component
             'pod_file.max' => 'POD file must not be larger than 5MB.',
         ]);
 
-        if ($this->trip->status !== 'completed') {
-            session()->flash('error', 'Trip must be completed before receiving POD.');
-            return;
-        }
+        // if ($this->trip->status !== 'completed') {
+        //     session()->flash('error', 'Trip must be completed before receiving POD.');
+        //     return;
+        // }
 
         $this->updatingStatus = true;
 
@@ -602,7 +602,7 @@ class ViewTrip extends Component
             DB::transaction(function () {
                 $path = null;
                 if ($this->pod_file) {
-                    $directory = "POCReceipt/Trip{$this->tripId}";
+                    $directory = "POCReceipt/Trip/{$this->tripId}";
                     if (!Storage::disk('public')->exists($directory)) {
                         Storage::disk('public')->makeDirectory($directory);
                     }

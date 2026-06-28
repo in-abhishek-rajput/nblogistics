@@ -175,7 +175,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="height: 80vh;">
-                    <iframe src="{{ route('trucks.monthly-report-pdf', ['truck' => $truckId, 'month' => $month, 'year' => $year]) }}" style="width: 100%; height: 100%; border: none;"></iframe>
+                    @if($showPdf)
+                        <iframe src="{{ route('trucks.monthly-report-pdf', ['truck' => $truckId, 'month' => $month, 'year' => $year]) }}" style="width: 100%; height: 100%; border: none;"></iframe>
+                    @endif
                 </div>
             </div>
         </div>

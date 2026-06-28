@@ -892,9 +892,15 @@
                     <i class="bi bi-list"></i>
                     <b>POD Challan</b>
                 </div>
-                <a href="#" class="btn btn-sm btn-secondary">
-                    <i class="bi bi-camera-fill me-1"></i>Add POD
-                </a>
+                @if($trip->pod_receipt)
+                    <a href="{{ route('trips.pod-print', ['id' => $trip->id]) }}" target="_blank" class="btn btn-sm btn-info text-white">
+                        <i class="bi bi-printer-fill me-1"></i>View POD
+                    </a>
+                @else
+                    <button wire:click.prevent="openPodModal" class="btn btn-sm btn-secondary">
+                        <i class="bi bi-camera-fill me-1"></i>Add POD
+                    </button>
+                @endif
             </div>
         </div>{{-- /documents --}}
 

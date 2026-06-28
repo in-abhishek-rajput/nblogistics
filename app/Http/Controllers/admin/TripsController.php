@@ -82,4 +82,14 @@ class TripsController extends Controller
 
         return view('admin.trip.digital-invoice', compact('trip', 'totalAdvances', 'totalCharges', 'totalPayments', 'pendingBalance'))->with('autoPrint', true);
     }
+    public function podPrint(string $id)
+    {
+        $trip = Trip::findOrFail($id);
+        
+        if (!$trip->pod_receipt) {
+            abort(404, 'POD not found');
+        }
+
+        return view('admin.trip.pod-print', compact('trip'))->with('autoPrint', true);
+    }
 }

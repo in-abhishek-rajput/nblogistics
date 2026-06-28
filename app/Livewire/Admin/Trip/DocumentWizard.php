@@ -573,9 +573,9 @@ class DocumentWizard extends Component
         $this->saveDraft();
 
         $routes = [
-            1 => route('builty.show', $this->tripId),
-            2 => route('invoices.show', $this->tripId),
-            3 => route('receipts.show', $this->tripId),
+            1 => route('builty.print', $this->tripId),
+            2 => route('invoices.print', $this->tripId),
+            3 => route('receipts.print', $this->tripId),
         ];
 
         $url = $routes[$this->currentStep] ?? '#';

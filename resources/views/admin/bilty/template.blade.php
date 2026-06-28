@@ -299,7 +299,11 @@
             
             <div class="flex items-center mt-2" style="margin-top: 10px;">
                 <div class="logo-area">
-                    <img src="{{ asset('img/logo.png') }}" alt="NB Logistics Logo" style="max-width: 130px; display: block;">
+                    @if(auth()->check() && auth()->user()->logo)
+                        <img src="{{ asset('storage/' . auth()->user()->logo) }}" alt="NB Logistics" style="max-width: 130px; display: block;">
+                    @else
+                        <img src="{{ asset('img/logo.png') }}" alt="NB Logistics" style="max-width: 130px; display: block;">
+                    @endif
                 </div>
                 <div class="company-info">
                     <div class="company-title">N. B. LOGISTICS</div>

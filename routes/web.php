@@ -60,7 +60,9 @@ Route::middleware(['auth'])->group(function () {
     // Document print/download routes
     Route::get('invoices/{id}/print', [InvoicesController::class, 'print'])->name('invoices.print');
     Route::get('builty/{id}/print', [BiltyController::class, 'print'])->name('builty.print');
+    Route::get('receipts/{id}/print', [ReceiptController::class, 'print'])->name('receipts.print');
     Route::get('trips/{id}/digital-invoice', [TripsController::class, 'digitalInvoice'])->name('trips.digital-invoice');
+    Route::get('trips/{id}/pod-print', [TripsController::class, 'podPrint'])->name('trips.pod-print');
     
     // Trip Document Wizard (Bilty → Invoice → Receipt)
     Route::get('trips/{tripId}/documents/{step?}', function ($tripId, $step = 1) {
