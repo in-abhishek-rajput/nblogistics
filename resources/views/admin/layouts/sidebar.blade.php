@@ -4,10 +4,7 @@
     <nav class="navbar bg-light navbar-light px-1">
         <div class="d-flex align-items-center ms-3 mb-3">
             <div class="position-relative">
-                @php
-                    $userLogo = auth()->check() ? auth()->user()->logo : null;
-                @endphp
-                <img class="rounded" src="{{ $userLogo ? asset('storage/' . $userLogo) : asset('img/user.jpg') }}" alt="" style="height: 40px; object-fit: cover;">
+                <img class="rounded" src="img/logo.png" alt="" style="height: 40px;">
                 <div
                     class="bg-success rounded-circle border border-2 border-white position-absolute end-0 bottom-0 p-1">
                 </div>
@@ -29,6 +26,7 @@
             <div class="dropdown dropstart">
                 <a href="#" class="nav-item nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" data-bs-toggle="dropdown"><i class="fa fa-file me-2"></i>Reports</a>
                 <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('reports.daily-freight') }}">Daily Freight Report</a></li>
                     <li><a class="dropdown-item" href="{{ route('reports.trips') }}">Trips Report</a></li>
                     <li><a class="dropdown-item" href="{{ route('reports.trucks') }}">Trucks Report</a></li>
                     <li><a class="dropdown-item" href="{{ route('reports.drivers') }}">Drivers Report</a></li>

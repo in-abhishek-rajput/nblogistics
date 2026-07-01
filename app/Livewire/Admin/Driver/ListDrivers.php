@@ -120,7 +120,7 @@ class ListDrivers extends Component
     public function getDriversProperty()
     {
         return Driver::query()
-            ->withTrashed()
+            // ->withTrashed()
             ->search($this->search) // Use scope for search
             ->status($this->statusFilter) // Use scope for status filter
             ->orderBy($this->sortColumn, $this->sortDirection) // Dynamic sorting

@@ -1021,7 +1021,7 @@
                     {{-- End KM --}}
                     <div class="mb-3">
                         <label for="end_km" class="form-label">
-                            End KM Reading <span class="text-danger">*</span>
+                            End KM Reading
                         </label>
                         <input
                             type="number"
@@ -1029,8 +1029,7 @@
                             id="end_km"
                             wire:model="end_km"
                             min="{{ $trip->start_km ?? 0 }}"
-                            placeholder="Enter odometer reading"
-                            required>
+                            placeholder="Enter odometer reading">
                         @error('end_km')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -1086,7 +1085,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="pod_file" class="form-label">
-                            POD Document <span class="text-danger">*</span>
+                            POD Document
                         </label>
                         <input
                             type="file"

@@ -401,12 +401,8 @@
             <div style="width: 32%; padding: 10px;">
                 <div style="font-size: 9px; font-weight: bold; margin-bottom: 10px;">SUBJECT TO JAMNAGAR JURISDICTION</div>
                 <div style="text-align: center;">
-                    @if(auth()->check() && auth()->user()->logo)
-                        <img src="{{ asset('storage/' . auth()->user()->logo) }}" alt="Company Logo" style="max-width: 140px; margin-top: 10px;">
-                    @else
-                        <img src="{{ asset('img/logo.png') }}" alt="NB Logistics Logo" style="max-width: 140px; margin-top: 10px;">
-                    @endif
-                </div>
+                    <img src="{{ asset('img/logo.png') }}" alt="NB Logistics Logo" style="max-width: 140px; margin-top: 10px;">
+               </div>
             </div>
             <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 15px;">
                 <div class="bill-title-box" style="margin-bottom:10px;">PAN NO.: GNWPS1050M</div>

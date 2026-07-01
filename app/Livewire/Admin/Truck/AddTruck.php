@@ -10,7 +10,7 @@ class AddTruck extends Component
 {
     // Form properties - public for Livewire binding
     public string $truck_number = '';
-    public string $truck_type = '';
+    public string $truck_type = 'ft';
     public string $ownership = 'self';
     public string $status = 'available';
     public $driver_id = null;

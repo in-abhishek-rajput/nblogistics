@@ -112,7 +112,7 @@ class ListTrucks extends Component
     public function getTrucksProperty()
     {
         return Truck::query()
-            ->withTrashed()
+            // ->withTrashed()
             ->with('driver') // Eager load driver
             ->search($this->search) // Use scope for search
             ->status($this->statusFilter) // Use scope for status filter

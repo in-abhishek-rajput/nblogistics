@@ -8,8 +8,26 @@ use Illuminate\Http\Request;
 class ReportsController extends Controller
 {
     /**
-     * Show the trips report.
+     * Show the daily freight report.
      */
+    public function dailyFreight()
+    {
+        return view('admin.reports.daily-freight');
+    }
+
+    /**
+     * Print the daily freight report.
+     */
+    public function dailyFreightPrint($date)
+    {
+        $trips = \App\Models\Trip::with(['party', 'truck', 'driver'])
+            ->whereDate('start_date', $date)
+            ->orderBy('id', 'asc')
+            ->get();
+            
+        return view('admin.reports.print.daily-freight', compact('trips', 'date'));
+    }
+
     public function trips()
     {
         return view('admin.reports.trips');

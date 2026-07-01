@@ -261,7 +261,7 @@
                         @enderror
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Start KM Reading<span class="text-danger">*</span></label>
+                        <label class="form-label">Start KM Reading</label>
                         <input type="number" wire:model="start_km" class="form-control @error('start_km') is-invalid @enderror"
                             placeholder="Starting kilometer">
                         @error('start_km')

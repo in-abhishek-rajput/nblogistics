@@ -536,12 +536,11 @@ class ViewTrip extends Component
         $this->validate(
             [
                 'end_date' => ['required', 'date', "after_or_equal:{$startDate}"],
-                'end_km' => ['required', 'numeric', "min:{$minKm}"],
+                'end_km' => ['nullable', 'numeric', "min:{$minKm}"],
             ],
             [
                 'end_date.required' => 'End date is required.',
                 'end_date.after_or_equal' => 'End date must be on or after the trip start date (' . $this->trip->start_date?->format('d M Y') . ').',
-                'end_km.required' => 'End KM reading is required.',
                 'end_km.numeric' => 'End KM must be a number.',
                 'end_km.min' => "End KM must be at least {$minKm} km (start reading).",
             ]
@@ -561,7 +560,7 @@ class ViewTrip extends Component
                 $this->trip->update([
                     'status' => 'completed',
                     'end_date' => $this->end_date,
-                    'end_km' => (int) $this->end_km,
+                    'end_km' => $this->end_km === '' || $this->end_km === null ? 0 : (int) $this->end_km,
                     'completed_date' => now(),
                     'updated_by' => auth()->id(),
                 ]);
@@ -584,9 +583,8 @@ class ViewTrip extends Component
     public function savePodModal(): void
     {
         $this->validate([
-            'pod_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            'pod_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
         ], [
-            'pod_file.required' => 'Please select a POD file.',
             'pod_file.mimes' => 'POD file must be a PDF, JPG, JPEG, or PNG.',
             'pod_file.max' => 'POD file must not be larger than 5MB.',
         ]);

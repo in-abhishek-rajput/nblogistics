@@ -40,13 +40,14 @@ return [
     |
     */
     'types' => [
-        'mini-truck' => 'Mini Truck/LCV',
-        'open-truck' => 'Open Body Truck',
-        'closed-container' => 'Closed Container',
-        'trailer' => 'Trailer',
-        'tanker' => 'Tanker',
-        'tipper' => 'Tipper',
-        'other' => 'Other',
+        'ft' => 'FT'
+        // 'mini-truck' => 'Mini Truck/LCV',
+        // 'open-truck' => 'Open Body Truck',
+        // 'closed-container' => 'Closed Container',
+        // 'trailer' => 'Trailer',
+        // 'tanker' => 'Tanker',
+        // 'tipper' => 'Tipper',
+        // 'other' => 'Other',
     ],
 
     /*

@@ -62,8 +62,9 @@ class AddTrip extends Component
      */
     public function mount()
     {
-        $this->partyList = Party::active()
-            ->orderBy('name')
+        $this->partyList = Party::
+        //active()
+            orderBy('name')
             ->get(['id', 'name'])
             ->toArray();
 
@@ -144,7 +145,7 @@ class AddTrip extends Component
             'destination' => 'required|string|max:255',
             'billing_type' => 'required|in:' . implode(',', array_keys(config('trip.billing_types'))),
             'start_date' => 'required|date',
-            'start_km' => 'required|integer|min:0',
+            'start_km' => 'nullable|integer|min:0',
             'lr_number' => 'nullable|string|max:255',
             'material_name' => 'nullable|string|max:255',
             'note' => 'nullable|string',
@@ -186,7 +187,7 @@ class AddTrip extends Component
             'unit.numeric' => 'Unit must be a number.',
             'unit.min' => 'Unit must be positive.',
             'start_date.required' => 'Start date is required.',
-            'start_km.required' => 'Start KM reading is required.',
+
             'start_km.integer' => 'Start KM must be a whole number.',
             'start_km.min' => 'Start KM must be positive.',
             'lr_number.string' => 'LR Number must be a string.',
@@ -264,6 +265,11 @@ class AddTrip extends Component
 
         // Set pending_freight_amount equal to freight_amount initially
         $validated['pending_freight_amount'] = $validated['freight_amount'];
+
+        // Ensure start_km is at least 0 if empty
+        if (empty($validated['start_km'])) {
+            $validated['start_km'] = 0;
+        }
 
         try {
             // Create trip using validated data

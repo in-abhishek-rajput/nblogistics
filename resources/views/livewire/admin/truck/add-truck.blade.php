@@ -17,7 +17,7 @@
                     @foreach ($types as $key => $typeLabel)
                         <div class="col-md-3 col-4 mb-3">
                             <label for="type_{{ $key }}" class="d-block text-center">
-                                <input type="radio" wire:model="truck_type" value="{{ $key }}" id="type_{{ $key }}" class="form-check-input" />
+                                <input type="radio" wire:model="truck_type" value="{{ $key }}" id="type_{{ $key }}" class="form-check-input" {{ $key == 'ft' ? 'checked' : '' }} />
                                 <img src="{{ asset('img/' . $key . '.png') }}" alt="" class="img-fluid mt-2" style="max-width: 60px;"><br>
                                 <span class="fs-14">{{ $typeLabel }}</span>
                             </label>

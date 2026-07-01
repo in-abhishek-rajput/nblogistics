@@ -62,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('builty/{id}/print', [BiltyController::class, 'print'])->name('builty.print');
     Route::get('receipts/{id}/print', [ReceiptController::class, 'print'])->name('receipts.print');
     Route::get('trips/{id}/digital-invoice', [TripsController::class, 'digitalInvoice'])->name('trips.digital-invoice');
+    Route::get('trips/{id}/share-whatsapp-invoice', [TripsController::class, 'shareWhatsappInvoice'])->name('trips.share-whatsapp-invoice');
     Route::get('trips/{id}/pod-print', [TripsController::class, 'podPrint'])->name('trips.pod-print');
     
     // Trip Document Wizard (Bilty → Invoice → Receipt)
@@ -70,6 +71,8 @@ Route::middleware(['auth'])->group(function () {
     })->name('trip.documents');
     
     // Reports Routes
+    Route::get('reports/daily-freight', [ReportsController::class, 'dailyFreight'])->name('reports.daily-freight');
+    Route::get('reports/daily-freight/{date}/print', [ReportsController::class, 'dailyFreightPrint'])->name('reports.daily-freight.print');
     Route::get('reports/trips', [ReportsController::class, 'trips'])->name('reports.trips');
     Route::get('reports/trucks', [ReportsController::class, 'trucks'])->name('reports.trucks');
     Route::get('reports/drivers', [ReportsController::class, 'drivers'])->name('reports.drivers');
